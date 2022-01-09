@@ -3,11 +3,14 @@ class CDUAvailableFlightPlanPage {
         mcdu.clearDisplay();
         mcdu.page.Current = mcdu.page.AvailableFlightPlanPage;
         let fromTo = "NO ORIGIN/DEST";
-        if (mcdu.flightPlanManager.getOrigin()) {
-            if (mcdu.flightPlanManager.getDestination()) {
-                fromTo = mcdu.flightPlanManager.getOrigin().ident + "/" + mcdu.flightPlanManager.getDestination().ident;
-            }
+
+        const origin = mcdu.flightPlanService.active.originAirport;
+        const dest = mcdu.flightPlanService.active.destinationAirport;
+
+        if (origin && dest) {
+            fromTo = `${origin.ident}/${dest.ident}`;
         }
+
         mcdu.setTemplate([
             [fromTo],
             [""],

@@ -11,11 +11,11 @@ class A320_Neo_CDU_AirwaysFromWaypointPage {
         if (mcdu.flightPlanManager.getCurrentFlightPlanIndex() === 1) {
             rowBottomLine = ["{ERASE[color]amber", "INSERT*[color]amber"];
             mcdu.onRightInput[5] = async () => {
-                mcdu.insertTemporaryFlightPlan(() => {
-                    mcdu.copyAirwaySelections();
-                    mcdu.updateConstraints();
-                    CDUFlightPlanPage.ShowPage(mcdu, 0);
-                });
+                mcdu.flightPlanService.temporaryInsert();
+
+                await mcdu.copyAirwaySelections();
+                mcdu.updateConstraints();
+                CDUFlightPlanPage.ShowPage(mcdu, 0);
             };
         }
         mcdu.onLeftInput[5] = async () => {

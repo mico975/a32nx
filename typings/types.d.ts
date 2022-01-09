@@ -1,3 +1,6 @@
+import { FlightPlanService as Service } from "../src/fmgc/src";
+import { FlightPlanIndex as Index } from '../src/fmgc/src';
+
 declare global {
     type NauticalMiles = number;
     type Heading = number;
@@ -26,6 +29,12 @@ declare global {
     type InchesOfMercury = number;
     type Millibar = number;
     type PressurePerSquareInch = number;
+
+    namespace Fmgc {
+        const FlightPlanService: typeof Service
+
+        const FlightPlanIndex: typeof Index
+    }
 }
 
 export {};

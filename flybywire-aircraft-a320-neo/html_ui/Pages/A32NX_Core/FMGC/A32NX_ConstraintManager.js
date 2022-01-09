@@ -25,13 +25,16 @@ class A32NX_ConstraintManager {
      * @returns {number} new cached altitude constraint
      */
     static getConstraintAltitude(flightPhase, fpm, curConstraintAlt, crzAlt) {
-        if (fpm.getIsDirectTo() || flightPhase === FmgcFlightPhases.CRUISE) {
-            return 0;
-        }
-        if (flightPhase === FmgcFlightPhases.DESCENT || flightPhase === FmgcFlightPhases.APPROACH) {
-            return Math.round(this._getAltitudeConstraintDescent(fpm, curConstraintAlt));
-        }
-        return Math.round(this._getAltitudeConstraintAscent(fpm, crzAlt));
+        return 0;
+
+        // TODO port over (or maybe just drop in favour of pog bbk vnav
+        // if (fpm.getIsDirectTo() || flightPhase === FmgcFlightPhases.CRUISE) {
+        //     return 0;
+        // }
+        // if (flightPhase === FmgcFlightPhases.DESCENT || flightPhase === FmgcFlightPhases.APPROACH) {
+        //     return Math.round(this._getAltitudeConstraintDescent(fpm, curConstraintAlt));
+        // }
+        // return Math.round(this._getAltitudeConstraintAscent(fpm, crzAlt));
     }
 
     static _getAltitudeConstraintAscent(fpm, crzAlt) {

@@ -220,12 +220,12 @@ class CDUAvailableArrivalsPage {
                     });
                 };
                 mcdu.onRightInput[5] = async () => {
-                    mcdu.insertTemporaryFlightPlan(() => {
-                        mcdu.updateTowerHeadwind();
-                        mcdu.updateConstraints();
-                        CDUPerformancePage.UpdateThrRedAccFromDestination(mcdu);
-                        CDUFlightPlanPage.ShowPage(mcdu);
-                    });
+                    mcdu.flightPlanService.temporaryInsert();
+
+                    mcdu.updateTowerHeadwind();
+                    mcdu.updateConstraints();
+                    CDUPerformancePage.UpdateThrRedAccFromDestination(mcdu);
+                    CDUFlightPlanPage.ShowPage(mcdu);
                 };
             } else {
                 mcdu.onLeftInput[5] = () => {
@@ -326,18 +326,20 @@ class CDUAvailableArrivalsPage {
             let bottomLine = ["<RETURN"];
             if (mcdu.flightPlanManager.getCurrentFlightPlanIndex() === 1) {
                 bottomLine = ["{ERASE[color]amber", "INSERT*[color]amber"];
+
                 mcdu.onLeftInput[5] = async () => {
                     mcdu.eraseTemporaryFlightPlan(() => {
                         CDUFlightPlanPage.ShowPage(mcdu);
                     });
                 };
+
                 mcdu.onRightInput[5] = async () => {
-                    mcdu.insertTemporaryFlightPlan(() => {
-                        mcdu.updateTowerHeadwind();
-                        mcdu.updateConstraints();
-                        CDUPerformancePage.UpdateThrRedAccFromDestination(mcdu);
-                        CDUAvailableArrivalsPage.ShowPage(mcdu, airport, 0, true);
-                    });
+                    mcdu.flightPlanService.temporaryInsert();
+
+                    mcdu.updateTowerHeadwind();
+                    mcdu.updateConstraints();
+                    CDUPerformancePage.UpdateThrRedAccFromDestination(mcdu);
+                    CDUAvailableArrivalsPage.ShowPage(mcdu, airport, 0, true);
                 };
             } else {
                 mcdu.onLeftInput[5] = () => {

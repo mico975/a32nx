@@ -51,11 +51,15 @@ module.exports = {
             ],
         }),
         nodeResolve({ extensions }),
-        commonjs(),
+        commonjs({ include: /node_modules/ }),
         babel({
             presets: ['@babel/preset-typescript', ['@babel/preset-env', { targets: { browsers: ['safari 11'] } }]],
             plugins: [
                 '@babel/plugin-proposal-class-properties',
+            ],
+            include: [
+                './**/*',
+                /node_modules/,
             ],
             extensions,
         }),

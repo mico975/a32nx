@@ -1,3 +1,5 @@
+// TODO: Look into deleting (deprecated)
+
 import React, { useContext, useEffect, useState } from 'react';
 import { FlightPlanManager, ManagedFlightPlan } from '@shared/flightplan';
 import { useSimVar } from './simVars';

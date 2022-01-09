@@ -83,6 +83,8 @@
   },
   "dependencies": {
     "msfs-geo": "^0.1.0-alpha4",
+    "msfs-navdata": "^1.0.6",
+    "node-fetch": "^2.6.6",
     "@flybywiresim/api-client": "^0.16.2",
     "@flybywiresim/react-components": "^0.3.1",
     "@flybywiresim/tailwind-config": "^0.5.0",

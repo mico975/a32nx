@@ -1,7 +1,7 @@
 import React, { FC, memo, useEffect, useState } from 'react';
 import { useSimVar } from '@instruments/common/simVars';
 import { Layer, getSmallestAngle } from '@instruments/common/utils';
-import { useFlightPlanManager } from '@instruments/common/flightplan';
+// import { useFlightPlanManager } from '@instruments/common/flightplan';
 import { MathUtils } from '@shared/MathUtils';
 import { TuningMode } from '@fmgc/radionav';
 import { Mode, EfisSide, NdSymbol } from '@shared/NavigationDisplay';
@@ -25,7 +25,7 @@ export interface RoseModeProps {
 }
 
 export const RoseMode: FC<RoseModeProps> = ({ symbols, adirsAlign, rangeSetting, mode, side, ppos, mapHidden }) => {
-    const flightPlanManager = useFlightPlanManager();
+    // const flightPlanManager = useFlightPlanManager();
 
     const [magHeading] = useSimVar('PLANE HEADING DEGREES MAGNETIC', 'degrees');
     const [magTrack] = useSimVar('GPS GROUND MAGNETIC TRACK', 'degrees');
@@ -82,11 +82,12 @@ export const RoseMode: FC<RoseModeProps> = ({ symbols, adirsAlign, rangeSetting,
                                 debug={false}
                             />
 
-                            { (((fmaLatMode === LateralMode.NONE
+                            {/* TODO: investigate for use of flightPlanManager */}
+                            {/* { (((fmaLatMode === LateralMode.NONE
                                 || fmaLatMode === LateralMode.HDG
                                 || fmaLatMode === LateralMode.TRACK) && !fmaLatArmed) || !flightPlanManager.getCurrentFlightPlan().length) && (
                                 <TrackLine x={384} y={384} heading={heading} track={track} />
-                            )}
+                            )} */}
                         </g>
                     )}
                     <RadioNeedle index={1} side={side} displayMode={mode} centreHeight={384} />
@@ -101,7 +102,8 @@ export const RoseMode: FC<RoseModeProps> = ({ symbols, adirsAlign, rangeSetting,
                 { mode === Mode.ROSE_VOR && <VorInfo side={side} /> }
                 { mode === Mode.ROSE_ILS && <IlsInfo /> }
 
-                <ApproachMessage info={flightPlanManager.getAirportApproach()} flightPhase={fmgcFlightPhase} />
+                {/* TODO: investigate for use of flightPlanManager */}
+                {/* <ApproachMessage info={flightPlanManager.getAirportApproach()} flightPhase={fmgcFlightPhase} /> */}
                 <TrackBug heading={heading} track={track} />
                 { mode === Mode.ROSE_NAV && lsDisplayed && <LsCourseBug heading={heading} lsCourse={lsCourse} /> }
                 <SelectedHeadingBug heading={heading} selected={selectedHeading} />

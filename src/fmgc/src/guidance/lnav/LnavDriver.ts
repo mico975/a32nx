@@ -439,6 +439,7 @@ export class LnavDriver implements GuidanceComponent {
     }
 
     sequenceLeg(_leg?: Leg, outboundTransition?: Transition): void {
+        // TODO: refactor to use new flight plan manager
         let wpIndex = this.guidanceController.flightPlanManager.getActiveWaypointIndex(false, false, 0);
         const wp = this.guidanceController.flightPlanManager.getActiveWaypoint(false, false, 0);
         console.log(`[FMGC/Guidance] LNAV - sequencing leg. [WP: ${wp.ident} Active WP Index: ${wpIndex}]`);

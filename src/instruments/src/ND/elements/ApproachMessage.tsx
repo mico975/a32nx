@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { Layer } from '@instruments/common/utils';
 import { ApproachStats } from '@fmgc/flightplanning/data/flightplan';
+// TODO: look into deleting reference to function imported below?
 import { normaliseApproachName } from '@instruments/common/flightplan';
 import { FmgcFlightPhase } from '@shared/flightphase';
 

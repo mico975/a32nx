@@ -1,34 +1,34 @@
 class CDULateralRevisionPage {
+    /**
+     *
+     * @param mcdu
+     * @param waypoint {FlightPlanLeg}
+     * @param waypointIndexFP
+     * @constructor
+     */
     static ShowPage(mcdu, waypoint, waypointIndexFP) {
         mcdu.clearDisplay();
         mcdu.page.Current = mcdu.page.LateralRevisionPage;
 
-        let coordinates = "";
-        if (waypoint && waypoint.infos && waypoint.infos.coordinates) {
-            const lat = CDUInitPage.ConvertDDToDMS(waypoint.infos.coordinates['lat'], false);
-            const long = CDUInitPage.ConvertDDToDMS(waypoint.infos.coordinates['long'], true);
-            coordinates = `${lat.deg}°${lat.min}.${Math.ceil(Number(lat.sec / 100))}${lat.dir}/${long.deg}°${long.min}.${Math.ceil(Number(long.sec / 100))}${long.dir}[color]green`;
-        }
-        const isPpos = waypoint === undefined || waypointIndexFP === 0 && waypoint !== mcdu.flightPlanManager.getOrigin();
-        const isFrom = waypointIndexFP === mcdu.flightPlanManager.getActiveWaypointIndex() - 1;
-        const isDeparture = waypoint === mcdu.flightPlanManager.getOrigin() && !isPpos; // TODO this is bogus... compare icaos
-        const isDestination = waypoint === mcdu.flightPlanManager.getDestination() && !isPpos; // TODO this is bogus... compare icaos
+        const coordinates = "";
+        // TODO port over
+        // if (waypoint && waypoint.infos && waypoint.infos.coordinates) {
+        //     const lat = CDUInitPage.ConvertDDToDMS(waypoint.infos.coordinates['lat'], false);
+        //     const long = CDUInitPage.ConvertDDToDMS(waypoint.infos.coordinates['long'], true);
+        //     coordinates = `${lat.deg}°${lat.min}.${Math.ceil(Number(lat.sec / 100))}${lat.dir}/${long.deg}°${long.min}.${Math.ceil(Number(long.sec / 100))}${long.dir}[color]green`;
+        // }
+        const activeOrTemporaryPlan = mcdu.flightPlanService.activeOrTemporary;
+
+        const isPpos = waypoint === undefined || waypointIndexFP === 0 && waypoint !== activeOrTemporaryPlan.originLeg;
+        const isFrom = waypointIndexFP === activeOrTemporaryPlan.activeWaypointIndex - 1;
+        const isDeparture = waypoint === activeOrTemporaryPlan.originLeg && !isPpos; // TODO this is bogus... compare icaos
+        const isDestination = waypoint === activeOrTemporaryPlan.destinationLeg && !isPpos; // TODO this is bogus... compare icaos
         const isWaypoint = !isDeparture && !isDestination && !isPpos;
 
         let waypointIdent = isPpos ? "PPOS" : '---';
+
         if (waypoint) {
             waypointIdent = waypoint.ident;
-            if (isDeparture) {
-                const originRunway = mcdu.flightPlanManager.getOriginRunway();
-                if (originRunway) {
-                    waypointIdent += Avionics.Utils.formatRunway(originRunway.designation);
-                }
-            } else if (isDestination) {
-                const destinationRunway = mcdu.flightPlanManager.getDestinationRunway();
-                if (destinationRunway) {
-                    waypointIdent += Avionics.Utils.formatRunway(destinationRunway.designation);
-                }
-            }
         }
 
         let departureCell = "";
@@ -38,7 +38,7 @@ class CDULateralRevisionPage {
                 return mcdu.getDelaySwitchPage();
             };
             mcdu.onLeftInput[0] = () => {
-                CDUAvailableDeparturesPage.ShowPage(mcdu, waypoint);
+                CDUAvailableDeparturesPage.ShowPage(mcdu, activeOrTemporaryPlan.originAirport);
             };
         }
 

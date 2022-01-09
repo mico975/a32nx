@@ -1,3 +1,8 @@
+// Copyright (c) 2021-2022 FlyByWire Simulations
+// Copyright (c) 2021-2022 Synaptic Simulations
+//
+// SPDX-License-Identifier: GPL-3.0
+
 import { GuidanceComponent } from '@fmgc/guidance/GuidanceComponent';
 import { PseudoWaypoint, PseudoWaypointSequencingAction } from '@fmgc/guidance/PsuedoWaypoint';
 import { VnavConfig, VnavDescentMode } from '@fmgc/guidance/vnav/VnavConfig';
@@ -9,6 +14,7 @@ import { GuidanceController } from '@fmgc/guidance/GuidanceController';
 import { LateralMode } from '@shared/autopilot';
 import { FixedRadiusTransition } from '@fmgc/guidance/lnav/transitions/FixedRadiusTransition';
 import { Leg } from '@fmgc/guidance/lnav/legs/Leg';
+import { FlightPlanService } from '@fmgc/flightplanning/new/FlightPlanService';
 
 const PWP_IDENT_TOD = '(T/D)';
 const PWP_IDENT_DECEL = '(DECEL)';
@@ -36,7 +42,7 @@ export class PseudoWaypoints implements GuidanceComponent {
 
     private recompute() {
         const geometry = this.guidanceController.activeGeometry;
-        const wptCount = this.guidanceController.flightPlanManager.getWaypointsCount();
+        const wptCount = FlightPlanService.active.allLegs.length;
 
         if (!geometry || geometry.legs.size < 1) {
             this.pseudoWaypoints.length = 0;

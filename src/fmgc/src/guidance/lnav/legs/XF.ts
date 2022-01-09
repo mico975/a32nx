@@ -7,13 +7,15 @@ import { Leg } from '@fmgc/guidance/lnav/legs/Leg';
 import { FixedRadiusTransition } from '@fmgc/guidance/lnav/transitions/FixedRadiusTransition';
 import { Coordinates } from '@fmgc/flightplanning/data/geo';
 import { Guidable } from '@fmgc/guidance/Guidable';
+import { Waypoint } from 'msfs-navdata';
 import { DmeArcTransition } from '@fmgc/guidance/lnav/transitions/DmeArcTransition';
 import { distanceTo } from 'msfs-geo';
 import { sideOfPointOnCourseToFix } from '@fmgc/guidance/lnav/CommonGeometry';
 
 export abstract class XFLeg extends Leg {
     protected constructor(
-        public fix: WayPoint,
+        public fix: Waypoint,
+        public constrainedTurnDirection: TurnDirection,
     ) {
         super();
     }

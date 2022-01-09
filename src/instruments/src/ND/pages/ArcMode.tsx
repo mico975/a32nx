@@ -2,7 +2,7 @@ import React, { memo, useEffect, useState } from 'react';
 import { useSimVar } from '@instruments/common/simVars';
 import { getSmallestAngle } from '@instruments/common/utils';
 import { MathUtils } from '@shared/MathUtils';
-import { useFlightPlanManager } from '@instruments/common/flightplan';
+// import { useFlightPlanManager } from '@instruments/common/flightplan';
 import { RangeSetting, Mode, EfisSide, NdSymbol } from '@shared/NavigationDisplay';
 import { LateralMode } from '@shared/autopilot';
 import { FlightPlan } from '../elements/FlightPlan';
@@ -23,7 +23,7 @@ export interface ArcModeProps {
 }
 
 export const ArcMode: React.FC<ArcModeProps> = ({ symbols, adirsAlign, rangeSetting, side, ppos, mapHidden }) => {
-    const flightPlanManager = useFlightPlanManager();
+    // const flightPlanManager = useFlightPlanManager();
 
     const [magHeading] = useSimVar('PLANE HEADING DEGREES MAGNETIC', 'degrees');
     const [magTrack] = useSimVar('GPS GROUND MAGNETIC TRACK', 'degrees');
@@ -90,7 +90,8 @@ export const ArcMode: React.FC<ArcModeProps> = ({ symbols, adirsAlign, rangeSett
 
                 <ToWaypointIndicator side={side} />
 
-                <ApproachMessage info={flightPlanManager.getAirportApproach()} flightPhase={fmgcFlightPhase} />
+                {/* TODO: investigate */}
+                {/* <ApproachMessage info={flightPlanManager.getAirportApproach()} flightPhase={fmgcFlightPhase} /> */}
                 <TrackBug heading={heading} track={track} />
                 { lsDisplayed && <LsCourseBug heading={heading} lsCourse={lsCourse} /> }
                 <SelectedHeadingBug heading={heading} selected={selectedHeading} />

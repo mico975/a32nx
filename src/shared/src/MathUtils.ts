@@ -35,6 +35,15 @@ export class MathUtils {
        return (Math.round(val * coefficient) / coefficient);
    }
 
+   public static clampAngle(angle: number): Degrees {
+       let startAngle = angle;
+
+       while (startAngle > 360.0) startAngle -= 360.0;
+       while (startAngle < -360.0) startAngle += 360.0;
+
+       return startAngle;
+   }
+
    public static diffAngle(a: number, b: number, direction?: TurnDirection): number {
        let diff = b - a;
        while (diff > 180) {
