@@ -4,6 +4,11 @@ class A32NX_Core {
     constructor() {
         this.modules = [
             {
+                name: 'StateInitializer',
+                module: new A32NX_StateInitializer(),
+                updateInterval: 250,
+            },
+            {
                 name: 'ADIRS',
                 module: new A32NX_ADIRS(),
                 updateInterval: 100,
