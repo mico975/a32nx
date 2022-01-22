@@ -88,6 +88,7 @@ class A32NX_StateInitializer {
             }
 
             await Coherent.call("AP_ALT_VAR_SET_ENGLISH", 3, this.selectedAlt);
+            await SimVar.SetSimVarValue("K:A32NX.FCU_TRK_FPA_TOGGLE_PUSH", "number", 1);
         }
     }
 
