@@ -1,11 +1,11 @@
 const ENABLE_TOTAL_UPDATE_TIME_TRACING = false;
 
 class A32NX_Core {
-    constructor() {
+    constructor(flightPhaseManager) {
         this.modules = [
             {
                 name: 'StateInitializer',
-                module: new A32NX_StateInitializer(),
+                module: new A32NX_StateInitializer(flightPhaseManager),
                 updateInterval: 250,
             },
             {

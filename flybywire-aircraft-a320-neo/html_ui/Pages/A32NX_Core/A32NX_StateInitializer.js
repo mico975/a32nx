@@ -1,9 +1,12 @@
 class A32NX_StateInitializer {
-    constructor() {
+    constructor(flightPhaseManager) {
+        this.flightPhaseManager = flightPhaseManager;
         this.autobrakeLevel = null;
         this.useManagedSpeed = null;
         this.selectedSpeed = null;
         this.selectedAlt = null;
+        this.hasUnfrozen = null;
+        this.pushedTRK = null;
     }
 
     init() {
@@ -11,6 +14,8 @@ class A32NX_StateInitializer {
         this.selectedSpeed = Math.max(140, SimVar.GetSimVarValue("L:A32NX_STATE_INIT_SELECTED_SPEED", "Number"));
         this.selectedAlt = Math.max(2000, SimVar.GetSimVarValue("L:A32NX_STATE_INIT_SELECTED_ALT", "Number"));
         this.autobrakeLevel = SimVar.GetSimVarValue("L:A32NX_STATE_INIT_AUTOBRK_LVL", "Number");
+        this.hasUnfrozen = false;
+        this.pushedTRK = false;
     }
 
     async update() {
@@ -65,30 +70,39 @@ class A32NX_StateInitializer {
         if (
             SimVar.GetSimVarValue("L:A32NX_AUTOTHRUST_STATUS", "Number") === 2
             && ((this.useManagedSpeed === 0 && SimVar.GetSimVarValue("L:A32NX_AUTOTHRUST_MODE", "Number") === 7 && SimVar.GetSimVarValue("L:A32NX_AUTOPILOT_SPEED_SELECTED", "Number") === this.selectedSpeed)
-            || (this.useManagedSpeed === 1 && SimVar.GetSimVarValue("L:A32NX_AUTOTHRUST_MODE", "Number") === 10))
+            || this.useManagedSpeed === 1)
         ) {
+            // await SimVar.SetSimVarValue("L:A32NX_FMGC_FLIGHT_PHASE", "number", 5);
+            this.flightPhaseManager.changeFlightPhase(FmgcFlightPhases.APPROACH);
             if (this.useManagedSpeed === 1) {
-                await SimVar.SetSimVarValue("K:A32NX.FCU_SPD_PUSH", "number", 0);
+                await SimVar.SetSimVarValue("K:A32NX.FCU_SPD_PUSH", "number", 1);
                 console.log("Set managed speed!");
+                console.log("Flight phase: ", SimVar.GetSimVarValue("L:A32NX_FMGC_FLIGHT_PHASE", "number"));
+                console.log("managed speed PFD: ", SimVar.GetSimVarValue("L:A32NX_SPEEDS_MANAGED_PFD", "knots"));
             }
-            console.log("Autothrust armed");
-            await Promise.all([
-                SimVar.SetSimVarValue("K:FREEZE_LATITUDE_LONGITUDE_TOGGLE", "number", 1),
-                SimVar.SetSimVarValue("K:FREEZE_ALTITUDE_TOGGLE", "number", 1),
-                SimVar.SetSimVarValue("K:FREEZE_ATTITUDE_TOGGLE", "number", 1),
-                SimVar.SetSimVarValue("L:A32NX_STATE_INIT_ACTIVE", "Bool", 0)
-            ]);
+            console.log("Autothrust active!");
 
-            if (this.autobrakeLevel === 1) {
-                await SimVar.SetSimVarValue("K:AUTOBRAKE_LO_SET", "number", 1);
-                console.log("Set autobrake low!");
-            } else if (this.autobrakeLevel === 2) {
-                await SimVar.SetSimVarValue("K:AUTOBRAKE_MED_SET", "number", 1);
-                console.log("Set autobrake med!");
+            if (!this.pushedTRK && SimVar.GetSimVarValue("L:A32NX_TRK_FPA_MODE_ACTIVE", "number") === 0) {
+                SimVar.SetSimVarValue("K:A32NX.FCU_TRK_FPA_TOGGLE_PUSH", "number", 1);
+                this.pushedTRK = true;
+                console.log("Pushed trk!");
             }
 
-            await Coherent.call("AP_ALT_VAR_SET_ENGLISH", 3, this.selectedAlt);
-            await SimVar.SetSimVarValue("K:A32NX.FCU_TRK_FPA_TOGGLE_PUSH", "number", 1);
+            if (!this.hasUnfrozen) {
+                if (ll_freeze_active) {
+                    SimVar.SetSimVarValue("K:FREEZE_LATITUDE_LONGITUDE_TOGGLE", "number", 1);
+                }
+                if (alt_freeze_active) {
+                    SimVar.SetSimVarValue("K:FREEZE_ALTITUDE_TOGGLE", "number", 1);
+                }
+                if (att_freeze_active) {
+                    SimVar.SetSimVarValue("K:FREEZE_ATTITUDE_TOGGLE", "number", 1);
+                }
+                console.log("UNFROZEN");
+                this.hasUnfrozen = true;
+            }
+
+            SimVar.SetSimVarValue("L:A32NX_STATE_INIT_ACTIVE", "Bool", 0);
         }
     }
 
