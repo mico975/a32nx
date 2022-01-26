@@ -92,9 +92,8 @@ class A32NX_StateInitializer {
             // Set load values
             for (const [loadvar, i] of Object.entries(this.loadmap)) {
                 const initLoadValue = SimVar.GetSimVarValue(loadvar, "kilograms");
-                if (SimVar.GetSimVarValue(`PAYLOAD STATION WEIGHT:${i}`) !== initLoadValue) {
+                if (SimVar.GetSimVarValue(`PAYLOAD STATION WEIGHT:${i}`, "kilograms") !== initLoadValue) {
                     SimVar.SetSimVarValue(`PAYLOAD STATION WEIGHT:${i}`, "kilograms", initLoadValue);
-                    console.log(`Setting PAYLOAD STATION WEIGHT:${i} to ${initLoadValue}`);
                 }
             }
 
