@@ -309,3 +309,15 @@ export function arcLength(radius: NauticalMiles, sweepAngle: Degrees): NauticalM
 
     return circumference / 360 * Math.abs(sweepAngle);
 }
+
+export function getRollAnticipationDistance(gs: Knots, bankA: Degrees, bankB: Degrees): NauticalMiles {
+    // calculate delta phi
+    const deltaPhi = Math.abs(bankA - bankB);
+
+    // calculate RAD
+    const maxRollRate = 5; // deg / s, TODO picked off the wind
+    const k2 = 0.0038;
+    const rad = gs / 3600 * (Math.sqrt(1 + 2 * k2 * 9.81 * deltaPhi / maxRollRate) - 1) / (k2 * 9.81);
+
+    return rad;
+}
