@@ -3,8 +3,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0
 
-import { Airport, Database, Departure, ExternalBackend, Runway } from 'msfs-navdata';
-import { DepartureSegment } from '@fmgc/flightplanning/new/segments/DepartureSegment';
+import { Airport, Approach, Arrival, Database, Departure, ExternalBackend, Runway } from 'msfs-navdata';
 
 /**
  * Loads an airport from the navigation database
@@ -69,6 +68,32 @@ export async function loadAllDepartures(airport: Airport): Promise<Departure[]> 
     const db = new Database(new ExternalBackend('http://localhost:5000'));
 
     const proceduresAtAirport = await db.getDepartures(airport.ident);
+
+    return proceduresAtAirport;
+}
+
+/**
+ * Loads all STARs for an airport
+ *
+ * @param airport Airport object
+ */
+export async function loadAllArrivals(airport: Airport): Promise<Arrival[]> {
+    const db = new Database(new ExternalBackend('http://localhost:5000'));
+
+    const proceduresAtAirport = await db.getArrivals(airport.ident);
+
+    return proceduresAtAirport;
+}
+
+/**
+ * Loads all approaches for an airport
+ *
+ * @param airport Airport object
+ */
+export async function loadAllApproaches(airport: Airport): Promise<Approach[]> {
+    const db = new Database(new ExternalBackend('http://localhost:5000'));
+
+    const proceduresAtAirport = await db.getApproaches(airport.ident);
 
     return proceduresAtAirport;
 }

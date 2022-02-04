@@ -43,6 +43,9 @@ export class FlightPlan extends BaseFlightPlan {
         newPlan.availableOriginRunways = [...this.availableOriginRunways];
         newPlan.availableDepartures = [...this.availableDepartures];
         newPlan.availableDestinationRunways = [...this.availableDestinationRunways];
+        newPlan.availableArrivals = [...this.availableArrivals];
+        newPlan.availableApproaches = [...this.availableApproaches];
+        newPlan.availableApproachVias = [...this.availableApproachVias];
 
         return newPlan;
     }

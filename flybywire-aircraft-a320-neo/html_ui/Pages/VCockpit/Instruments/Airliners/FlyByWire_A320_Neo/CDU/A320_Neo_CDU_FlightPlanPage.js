@@ -82,8 +82,9 @@ class CDUFlightPlanPage {
         // PWPs
         const fmsPseudoWaypoints = mcdu.guidanceController.currentPseudoWaypoints;
 
-        // Primary F-PLAN
         const destIndex = concernedPlan.destinationLegIndex;
+
+        // Primary F-PLAN
         for (let i = 0; i < concernedPlan.legCount; i++) {
             const pseudoWaypointsOnLeg = fmsPseudoWaypoints.filter((it) => it.displayedOnMcdu && it.alongLegIndex === i);
 
@@ -103,7 +104,7 @@ class CDUFlightPlanPage {
                 waypointsAndMarkers.push({ wp: element, fpIndex: i});
             }
 
-            if (i === destIndex) {
+            if (i === concernedPlan.legCount - 1) {
                 waypointsAndMarkers.push({ marker: Markers.END_OF_FPLN, fpIndex: i});
 
                 if (!concernedPlan.alternateDestinationAirport) {
@@ -332,11 +333,16 @@ class CDUFlightPlanPage {
                     timeColor = "white";
                 }
 
+                let wptColor = color;
+                if (fpIndex >= concernedPlan.firstMissedApproachLeg) {
+                    wptColor = 'cyan';
+                }
+
                 scrollWindow[rowI] = {
                     fpIndex: fpIndex,
                     active: wpActive,
                     ident: ident,
-                    color: color,
+                    color: wptColor,
                     distance: distance,
                     spdColor: spdColor,
                     speedConstraint: speedConstraint,
@@ -411,7 +417,7 @@ class CDUFlightPlanPage {
                     addLskAt(rowI, () => mcdu.getDelaySwitchPage(),
                         (value, scratchpadCallback) => {
                             if (value === "") {
-                                CDULateralRevisionPage.ShowPage(mcdu, concernedPlan.destinationAirport, fpIndex);
+                                CDULateralRevisionPage.ShowPage(mcdu, concernedPlan.destinationLeg, fpIndex);
                             } else if (value.length > 0) {
                                 mcdu.insertWaypoint(value, fpIndex, (success) => {
                                     if (!success) {
@@ -615,12 +621,15 @@ class CDUFlightPlanPage {
 
             if (concernedPlan.destinationAirport) {
                 const destStats = stats.get(concernedPlan.legCount - 1);
-                destDistCell = destStats.distanceFromPpos.toFixed(0);
-                destEFOBCell = (NXUnits.kgToUser(mcdu.getDestEFOB(isFlying))).toFixed(1);
-                if (isFlying) {
-                    destTimeCell = FMCMainDisplay.secondsToUTC(destStats.etaFromPpos);
-                } else {
-                    destTimeCell = FMCMainDisplay.secondsTohhmm(destStats.timeFromPpos);
+
+                if (destStats) {
+                    destDistCell = destStats.distanceFromPpos.toFixed(0);
+                    destEFOBCell = (NXUnits.kgToUser(mcdu.getDestEFOB(isFlying))).toFixed(1);
+                    if (isFlying) {
+                        destTimeCell = FMCMainDisplay.secondsToUTC(destStats.etaFromPpos);
+                    } else {
+                        destTimeCell = FMCMainDisplay.secondsTohhmm(destStats.timeFromPpos);
+                    }
                 }
             }
             if (!CDUInitPage.fuelPredConditionsMet(mcdu)) {
@@ -632,7 +641,7 @@ class CDUFlightPlanPage {
 
             addLskAt(5, () => mcdu.getDelaySwitchPage(),
                 () => {
-                    CDULateralRevisionPage.ShowPage(mcdu, concernedPlan.destinationAirport, concernedPlan.legCount - 1);
+                    CDULateralRevisionPage.ShowPage(mcdu, concernedPlan.destinationLeg, concernedPlan.legCount - 1);
                 });
         }
 

@@ -8,7 +8,6 @@ import { FlightPlanSegment } from '@fmgc/flightplanning/new/segments/FlightPlanS
 import { FlightPlanElement, FlightPlanLeg } from '@fmgc/flightplanning/new/legs/FlightPlanLeg';
 import { BaseFlightPlan } from '@fmgc/flightplanning/new/plans/BaseFlightPlan';
 import { SegmentClass } from '@fmgc/flightplanning/new/segments/SegmentClass';
-import { FlightPlan } from '@fmgc/flightplanning/new/plans/FlightPlan';
 
 export class ApproachSegment extends FlightPlanSegment {
     class = SegmentClass.Arrival
@@ -60,6 +59,8 @@ export class ApproachSegment extends FlightPlanSegment {
 
         this.flightPlan.stringSegmentsForwards(this.flightPlan.previousSegment(this), this);
         this.insertNecessaryDiscontinuities();
+
+        this.flightPlan.availableApproachVias = matchingProcedure.transitions;
     }
 
     onRunwaySelectedWithoutApproach() {

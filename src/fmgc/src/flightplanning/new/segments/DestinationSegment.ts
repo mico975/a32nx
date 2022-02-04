@@ -4,14 +4,16 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import { Airport, Database, ExternalBackend, Runway } from 'msfs-navdata';
-import { FlightPlanLeg } from '@fmgc/flightplanning/new/legs/FlightPlanLeg';
+import { FlightPlanElement, FlightPlanLeg } from '@fmgc/flightplanning/new/legs/FlightPlanLeg';
 import { BaseFlightPlan } from '@fmgc/flightplanning/new/plans/BaseFlightPlan';
 import { SegmentClass } from '@fmgc/flightplanning/new/segments/SegmentClass';
-import { loadAllRunways } from '@fmgc/flightplanning/new/DataLoading';
+import { loadAllApproaches, loadAllArrivals, loadAllRunways } from '@fmgc/flightplanning/new/DataLoading';
 import { FlightPlanSegment } from './FlightPlanSegment';
 
 export class DestinationSegment extends FlightPlanSegment {
     class = SegmentClass.Arrival
+
+    allLegs: FlightPlanElement[] = []
 
     private airport: Airport;
 
@@ -38,6 +40,11 @@ export class DestinationSegment extends FlightPlanSegment {
         this.airport = airport;
 
         this.flightPlan.availableDestinationRunways = await loadAllRunways(this.destinationAirport);
+
+        await this.refreshDestinationLegs();
+
+        this.flightPlan.availableArrivals = await loadAllArrivals(this.destinationAirport);
+        this.flightPlan.availableApproaches = await loadAllApproaches(this.destinationAirport);
     }
 
     private runway?: Runway;
@@ -62,24 +69,26 @@ export class DestinationSegment extends FlightPlanSegment {
         }
 
         this.runway = matchingRunway;
+
+        await this.refreshDestinationLegs();
     }
 
-    get allLegs(): FlightPlanLeg[] {
+    private async refreshDestinationLegs() {
+        this.allLegs.length = 0;
+
         const planHasApproach = this.flightPlan.approachSegment.allLegs.length > 0;
 
         if (planHasApproach) {
-            return [];
+            return;
         }
 
         if (this.airport) {
             const approachName = this.flightPlan.approachSegment.approachProcedure?.ident ?? '';
 
-            return [
-                FlightPlanLeg.fromAirportAndRunway(this, approachName, this.airport, this.runway),
-            ];
+            this.allLegs.push(FlightPlanLeg.fromAirportAndRunway(this, approachName, this.airport, this.runway));
         }
 
-        return [];
+        this.flightPlan.availableApproaches = await loadAllApproaches(this.destinationAirport);
     }
 
     clone(forPlan: BaseFlightPlan): DestinationSegment {

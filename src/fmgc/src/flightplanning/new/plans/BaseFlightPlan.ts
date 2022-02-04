@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0
 
-import { Airport, Departure, ProcedureTransition, Runway } from 'msfs-navdata';
+import { Airport, Approach, Arrival, Departure, ProcedureTransition, Runway } from 'msfs-navdata';
 import { OriginSegment } from '@fmgc/flightplanning/new/segments/OriginSegment';
 import { FlightPlanElement } from '@fmgc/flightplanning/new/legs/FlightPlanLeg';
 import { DepartureSegment } from '@fmgc/flightplanning/new/segments/DepartureSegment';
@@ -24,6 +24,10 @@ import { WaypointStats } from '@fmgc/flightplanning/data/flightplan';
 export abstract class BaseFlightPlan {
     get legCount() {
         return this.allLegs.length;
+    }
+
+    get firstMissedApproachLeg() {
+        return this.allLegs.length - this.missedApproachSegment.allLegs.length;
     }
 
     activeWaypointIndex = 0;
@@ -60,6 +64,12 @@ export abstract class BaseFlightPlan {
 
     availableDestinationRunways: Runway[] = [];
 
+    availableArrivals: Arrival[] = [];
+
+    availableApproaches: Approach[] = [];
+
+    availableApproachVias: ProcedureTransition[] = [];
+
     get originLeg() {
         return this.originSegment.allLegs[0];
     }
@@ -71,20 +81,16 @@ export abstract class BaseFlightPlan {
     }
 
     get destinationLegIndex() {
-        if (this.destinationSegment.allLegs.length === 0) {
-            return -1;
-        }
-
         let accumulator = 0;
         for (const segment of this.orderedSegments) {
+            accumulator += segment.allLegs.length;
+
             if (segment === this.destinationSegment) {
                 break;
             }
-
-            accumulator += segment.allLegs.length;
         }
 
-        return accumulator;
+        return accumulator - 1;
     }
 
     elementAt(index: number): FlightPlanElement {
@@ -153,6 +159,7 @@ export abstract class BaseFlightPlan {
             this.approachViaSegment,
             this.approachSegment,
             this.destinationSegment,
+            this.missedApproachSegment,
         ];
     }
 

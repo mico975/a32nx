@@ -18,6 +18,7 @@ function getInputs() {
 }
 
 export default getInputs()
+    .filter(({ name }) => name === 'EFB')
     .map(({ path }) => {
         const config = JSON.parse(fs.readFileSync(join(Directories.instruments, 'src', path, 'config.json')));
 
