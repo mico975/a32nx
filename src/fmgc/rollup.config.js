@@ -32,7 +32,7 @@ const nodeResolve = require('@rollup/plugin-node-resolve').default;
 const replace = require('@rollup/plugin-replace');
 const copy = require('rollup-plugin-copy');
 
-const extensions = ['.js', '.ts'];
+const extensions = ['.ts', '.tsx', '.js', '.jsx', '.mjs'];
 
 const src = join(__dirname, '..');
 const root = join(__dirname, '..', '..');
@@ -53,14 +53,18 @@ module.exports = {
         nodeResolve({ extensions }),
         commonjs({ include: /node_modules/ }),
         babel({
-            presets: ['@babel/preset-typescript', ['@babel/preset-env', { targets: { browsers: ['safari 11'] } }]],
+            presets: [
+                ['@babel/preset-env', { targets: { safari: '11' } }],
+                ['@babel/preset-react', { runtime: 'automatic' }],
+                ['@babel/preset-typescript'],
+            ],
             plugins: [
                 '@babel/plugin-proposal-class-properties',
+                ['@babel/plugin-transform-runtime', { regenerator: true }],
+                ['module-resolver', { alias: { '@flybywiresim/failures': '../src/failures' } }],
             ],
-            include: [
-                './**/*',
-                /node_modules/,
-            ],
+            babelHelpers: 'runtime',
+            compact: false,
             extensions,
         }),
         typescriptPaths({
