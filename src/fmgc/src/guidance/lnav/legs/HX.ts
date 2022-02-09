@@ -14,7 +14,9 @@ import { Guidable } from '@fmgc/guidance/Guidable';
 import { XFLeg } from '@fmgc/guidance/lnav/legs/XF';
 import { LnavConfig } from '@fmgc/guidance/LnavConfig';
 import { MathUtils } from '@shared/MathUtils';
-import { LegMetadata } from '@fmgc/guidance/lnav/legs/index';
+import { AltitudeConstraintType, LegMetadata } from '@fmgc/guidance/lnav/legs/index';
+import { Waypoint } from 'msfs-navdata';
+import { fixCoordinates } from '@fmgc/flightplanning/new/utils';
 import { PathVector, PathVectorType } from '../PathVector';
 
 interface HxGeometry {
@@ -56,7 +58,10 @@ export class HMLeg extends XFLeg {
     private immExitRequested = false;
 
     constructor(
-        public to: WayPoint,
+        public to: Waypoint,
+        public course: DegreesTrue,
+        public holdDistance: NauticalMiles,
+        public holdDistanceInMinutes: NauticalMiles,
         public metadata: LegMetadata,
         public segment: SegmentType,
     ) {
@@ -68,8 +73,8 @@ export class HMLeg extends XFLeg {
     }
 
     get inboundLegCourse(): DegreesTrue {
-        // return SimVar.GetSimVarValue('L:HOLD_COURSE', 'number');
-        return this.to.additionalData.course;
+        // TODO port over
+        return 0;
     }
 
     get outboundLegCourse(): DegreesTrue {
@@ -77,8 +82,7 @@ export class HMLeg extends XFLeg {
     }
 
     get turnDirection(): TurnDirection {
-        // return SimVar.GetSimVarValue('L:HOLD_LEFT', 'number') > 0 ? TurnDirection.Left : TurnDirection.Right;
-        return this.to.turnDirection;
+        return this.metadata.turnDirection;
     }
 
     get ident(): string {
@@ -183,13 +187,13 @@ export class HMLeg extends XFLeg {
             return this.immExitLength;
         }
         // is distance in NM?
-        if (this.to.additionalData.distance > 0) {
-            return this.to.additionalData.distance;
+        if (this.holdDistance > 0) {
+            return this.holdDistance;
         }
 
         // distance is in time then...
         const defaultMinutes = this.to.legAltitude1 ? 1 : 1.5;
-        return (this.to.additionalData.distanceInMinutes > 0 ? this.to.additionalData.distanceInMinutes : defaultMinutes) * this.predictedSpeed / 60;
+        return (this.holdDistanceInMinutes > 0 ? this.holdDistanceInMinutes : defaultMinutes) * this.predictedSpeed / 60;
     }
 
     protected computeGeometry(): HxGeometry {
@@ -210,11 +214,11 @@ export class HMLeg extends XFLeg {
         const radius = this.radius;
         const leftTurn = this.turnDirection === TurnDirection.Left;
 
-        const fixA = Avionics.Utils.bearingDistanceToCoordinates(this.inboundLegCourse + (leftTurn ? -90 : 90), radius * 2, this.to.infos.coordinates.lat, this.to.infos.coordinates.long);
+        const fixA = Avionics.Utils.bearingDistanceToCoordinates(this.inboundLegCourse + (leftTurn ? -90 : 90), radius * 2, fixCoordinates(this.to.location).lat, fixCoordinates(this.to.location).long);
         const fixB = Avionics.Utils.bearingDistanceToCoordinates(this.outboundLegCourse, distance, fixA.lat, fixA.long);
-        const fixC = Avionics.Utils.bearingDistanceToCoordinates(this.outboundLegCourse, distance, this.to.infos.coordinates.lat, this.to.infos.coordinates.long);
+        const fixC = Avionics.Utils.bearingDistanceToCoordinates(this.outboundLegCourse, distance, fixCoordinates(this.to.location).lat, fixCoordinates(this.to.location).long);
 
-        const arcCentreFix1 = Avionics.Utils.bearingDistanceToCoordinates(this.inboundLegCourse + (leftTurn ? -90 : 90), radius, this.to.infos.coordinates.lat, this.to.infos.coordinates.long);
+        const arcCentreFix1 = Avionics.Utils.bearingDistanceToCoordinates(this.inboundLegCourse + (leftTurn ? -90 : 90), radius, fixCoordinates(this.to.location).lat, fixCoordinates(this.to.location).long);
         const arcCentreFix2 = Avionics.Utils.bearingDistanceToCoordinates(this.inboundLegCourse + (leftTurn ? -90 : 90), radius, fixC.lat, fixC.long);
 
         return {
@@ -236,7 +240,7 @@ export class HMLeg extends XFLeg {
     }
 
     get terminationPoint(): LatLongAlt {
-        return this.to.infos.coordinates;
+        return fixCoordinates(this.to.location);
     }
 
     get distance(): NauticalMiles {
@@ -271,9 +275,9 @@ export class HMLeg extends XFLeg {
 
         switch (this.state) {
         case HxLegGuidanceState.Inbound:
-            return courseToFixDistanceToGo(ppos, this.inboundLegCourse, this.to.infos.coordinates);
+            return courseToFixDistanceToGo(ppos, this.inboundLegCourse, fixCoordinates(this.to.location));
         case HxLegGuidanceState.Arc1:
-            return arcDistanceToGo(ppos, this.to.infos.coordinates, arcCentreFix1, sweepAngle) + this.computeLegDistance() * 2 + this.radius * Math.PI;
+            return arcDistanceToGo(ppos, fixCoordinates(this.to.location), arcCentreFix1, sweepAngle) + this.computeLegDistance() * 2 + this.radius * Math.PI;
         case HxLegGuidanceState.Outbound:
             return courseToFixDistanceToGo(ppos, this.outboundLegCourse, fixB) + this.computeLegDistance() + this.radius * Math.PI;
         case HxLegGuidanceState.Arc2:
@@ -294,7 +298,7 @@ export class HMLeg extends XFLeg {
         return [
             {
                 type: PathVectorType.Arc,
-                startPoint: this.to.infos.coordinates,
+                startPoint: fixCoordinates(this.to.location),
                 centrePoint: arcCentreFix1,
                 endPoint: fixA,
                 sweepAngle,
@@ -314,7 +318,7 @@ export class HMLeg extends XFLeg {
             {
                 type: PathVectorType.Line,
                 startPoint: fixC,
-                endPoint: this.to.infos.coordinates,
+                endPoint: fixCoordinates(this.to.location),
             },
         ];
     }
@@ -326,11 +330,11 @@ export class HMLeg extends XFLeg {
 
         switch (this.state) {
         case HxLegGuidanceState.Inbound: {
-            dtg = courseToFixDistanceToGo(ppos, this.inboundLegCourse, this.to.infos.coordinates);
+            dtg = courseToFixDistanceToGo(ppos, this.inboundLegCourse, fixCoordinates(this.to.location));
             break;
         }
         case HxLegGuidanceState.Arc1: {
-            dtg = arcDistanceToGo(ppos, this.to.infos.coordinates, geometry.arcCentreFix1, geometry.sweepAngle);
+            dtg = arcDistanceToGo(ppos, fixCoordinates(this.to.location), geometry.arcCentreFix1, geometry.sweepAngle);
             break;
         }
         case HxLegGuidanceState.Outbound: {
@@ -369,13 +373,13 @@ export class HMLeg extends XFLeg {
 
         switch (this.state) {
         case HxLegGuidanceState.Inbound:
-            params = courseToFixGuidance(ppos, trueTrack, this.inboundLegCourse, this.to.infos.coordinates);
-            dtg = courseToFixDistanceToGo(ppos, this.inboundLegCourse, this.to.infos.coordinates);
+            params = courseToFixGuidance(ppos, trueTrack, this.inboundLegCourse, fixCoordinates(this.to.location));
+            dtg = courseToFixDistanceToGo(ppos, this.inboundLegCourse, fixCoordinates(this.to.location));
             nextPhi = sweepAngle > 0 ? maxBank(tas, true) : -maxBank(tas, true);
             break;
         case HxLegGuidanceState.Arc1:
-            params = arcGuidance(ppos, trueTrack, this.to.infos.coordinates, arcCentreFix1, sweepAngle);
-            dtg = arcDistanceToGo(ppos, this.to.infos.coordinates, arcCentreFix1, sweepAngle);
+            params = arcGuidance(ppos, trueTrack, fixCoordinates(this.to.location), arcCentreFix1, sweepAngle);
+            dtg = arcDistanceToGo(ppos, fixCoordinates(this.to.location), arcCentreFix1, sweepAngle);
             prevPhi = params.phiCommand;
             break;
         case HxLegGuidanceState.Outbound:
@@ -430,12 +434,12 @@ export class HMLeg extends XFLeg {
     }
 
     getPathStartPoint(): Coordinates {
-        return this.to.infos.coordinates;
+        return fixCoordinates(this.to.location);
     }
 
     getPathEndPoint(): Coordinates {
         // TODO consider early exit to CF on HF leg
-        return this.to.infos.coordinates;
+        return fixCoordinates(this.to.location);
     }
 
     get disableAutomaticSequencing(): boolean {
@@ -451,17 +455,17 @@ export class HALeg extends HMLeg {
     private targetAltitude: Feet;
 
     constructor(
-        public to: WayPoint,
+        public to: Waypoint,
         public metadata: LegMetadata,
         public segment: SegmentType,
     ) {
         super(to, metadata, segment);
 
         // the term altitude is guaranteed to be at or above, and in field altitude1, by ARINC424 coding rules
-        if (this.to.legAltitudeDescription !== AltitudeDescriptor.AtOrAbove) {
-            console.warn(`HALeg invalid altitude descriptor ${this.to.legAltitudeDescription}, must be ${AltitudeDescriptor.AtOrAbove}`);
+        if (this.metadata.altitudeConstraint.type !== AltitudeConstraintType.atOrAbove) {
+            console.warn(`HALeg invalid altitude descriptor ${this.metadata.altitudeConstraint.type}, must be ${AltitudeDescriptor.AtOrAbove}`);
         }
-        this.targetAltitude = this.to.legAltitude1;
+        this.targetAltitude = this.metadata.altitudeConstraint.altitude1;
     }
 
     getGuidanceParameters(ppos: LatLongAlt, trueTrack: Degrees, tas: Knots): GuidanceParameters {
@@ -501,7 +505,7 @@ export class HALeg extends HMLeg {
         path.push({
             type: PathVectorType.Line,
             startPoint: fixC,
-            endPoint: this.to.infos.coordinates,
+            endPoint: fixCoordinates(this.to.location),
         });
 
         if (this.state === HxLegGuidanceState.Inbound) {
@@ -532,7 +536,7 @@ export class HALeg extends HMLeg {
 
         path.push({
             type: PathVectorType.Arc,
-            startPoint: this.to.infos.coordinates,
+            startPoint: fixCoordinates(this.to.location),
             centrePoint: arcCentreFix1,
             endPoint: fixA,
             sweepAngle,
@@ -568,7 +572,7 @@ export class HFLeg extends HMLeg {
         path.push({
             type: PathVectorType.Line,
             startPoint: fixC,
-            endPoint: this.to.infos.coordinates,
+            endPoint: fixCoordinates(this.to.location),
         });
 
         if (this.initialState === HxLegGuidanceState.Inbound) {
@@ -608,7 +612,7 @@ export class HFLeg extends HMLeg {
 
         path.push({
             type: PathVectorType.Arc,
-            startPoint: this.to.infos.coordinates,
+            startPoint: fixCoordinates(this.to.location),
             centrePoint: arcCentreFix1,
             endPoint: fixA,
             sweepAngle,

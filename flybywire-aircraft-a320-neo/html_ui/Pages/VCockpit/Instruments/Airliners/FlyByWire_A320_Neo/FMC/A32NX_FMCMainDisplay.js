@@ -575,7 +575,8 @@ class FMCMainDisplay extends BaseAirliners {
 
         this.A32NXCore.update();
 
-        this.updateAutopilot();
+        // TODO fix
+        // this.updateAutopilot();
 
         if (this._progBrgDistUpdateThrottler.canUpdate(_deltaTime) !== -1) {
             this.updateProgDistance();

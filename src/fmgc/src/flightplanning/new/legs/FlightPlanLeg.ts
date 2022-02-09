@@ -14,22 +14,21 @@ import { MathUtils } from '@shared/MathUtils';
  * A leg in a flight plan. Not to be confused with a geometry leg or a procedure leg
  */
 export class FlightPlanLeg {
+    type: LegType
+
     private constructor(
         public readonly segment: FlightPlanSegment,
-        private readonly definition: FlightPlanLegDefinition,
+        public readonly definition: FlightPlanLegDefinition,
         public readonly ident: string,
         public annotation: string,
         public readonly airwayIdent: string | undefined,
         public readonly rnp: number | undefined,
         public readonly overfly: boolean,
     ) {
+        this.type = definition.type;
     }
 
     isDiscontinuity: false = false
-
-    get type() {
-        return this.definition.type;
-    }
 
     get waypointDescriptor() {
         return this.definition.waypointDescriptor;

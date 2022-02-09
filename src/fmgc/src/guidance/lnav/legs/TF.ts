@@ -5,12 +5,7 @@
 
 import { GuidanceParameters } from '@fmgc/guidance/ControlLaws';
 import { MathUtils } from '@shared/MathUtils';
-import {
-    AltitudeConstraint,
-    altitudeConstraintFromProcedureLeg,
-    SpeedConstraint,
-    speedConstraintFromProcedureLeg,
-} from '@fmgc/guidance/lnav/legs';
+import { AltitudeConstraint, SpeedConstraint } from '@fmgc/guidance/lnav/legs';
 import { SegmentType } from '@fmgc/wtsdk';
 import { WaypointConstraintType } from '@fmgc/flightplanning/FlightPlanManager';
 import { Coordinates } from '@fmgc/flightplanning/data/geo';
@@ -18,7 +13,7 @@ import { Guidable } from '@fmgc/guidance/Guidable';
 import { XFLeg } from '@fmgc/guidance/lnav/legs/XF';
 import { courseToFixDistanceToGo, fixToFixGuidance, getIntermediatePoint } from '@fmgc/guidance/lnav/CommonGeometry';
 import { LnavConfig } from '@fmgc/guidance/LnavConfig';
-import { ProcedureLeg, TurnDirection, Waypoint } from 'msfs-navdata';
+import { Waypoint } from 'msfs-navdata';
 import { fixCoordinates } from '@fmgc/flightplanning/new/utils';
 import { bearingTo } from 'msfs-geo';
 import { LegMetadata } from '@fmgc/guidance/lnav/legs/index';
@@ -36,26 +31,21 @@ export class TFLeg extends XFLeg {
     speedConstraint: SpeedConstraint | undefined
 
     constructor(
-        public procedureLeg: ProcedureLeg | undefined,
         public from: Waypoint,
         public to: Waypoint,
-        constraintType: WaypointConstraintType,
         public readonly metadata: Readonly<LegMetadata>,
         segment: SegmentType,
     ) {
-        super(to, procedureLeg?.turnDirection ?? TurnDirection.Unknown);
+        super(to);
 
         this.from = from;
         this.to = to;
         this.segment = segment;
-        this.constraintType = constraintType;
-        this.course = Avionics.Utils.computeGreatCircleHeading(
+        this.constraintType = WaypointConstraintType.CLB;
+        this.course = bearingTo(
             fixCoordinates(this.from.location),
             fixCoordinates(this.to.location),
         );
-
-        this.altitudeConstraint = altitudeConstraintFromProcedureLeg(this.procedureLeg);
-        this.speedConstraint = speedConstraintFromProcedureLeg(this.procedureLeg);
     }
 
     get inboundCourse(): DegreesTrue {
@@ -117,7 +107,7 @@ export class TFLeg extends XFLeg {
     }
 
     getGuidanceParameters(ppos: Coordinates, trueTrack: Degrees): GuidanceParameters | null {
-        return fixToFixGuidance(ppos, trueTrack, fixCoordinates(this.from.location), fixCoordinates(this.from.location));
+        return fixToFixGuidance(ppos, trueTrack, fixCoordinates(this.from.location), fixCoordinates(this.to.location));
     }
 
     getNominalRollAngle(_gs: Knots): Degrees {
@@ -146,7 +136,7 @@ export class TFLeg extends XFLeg {
      * @param ppos {LatLong} the current position of the aircraft
      */
     getAircraftToLegBearing(ppos: LatLongData): number {
-        const aircraftToTerminationBearing = Avionics.Utils.computeGreatCircleHeading(ppos, fixCoordinates(this.from.location));
+        const aircraftToTerminationBearing = Avionics.Utils.computeGreatCircleHeading(ppos, fixCoordinates(this.to.location));
         const aircraftLegBearing = MathUtils.smallCrossingAngle(this.outboundCourse, aircraftToTerminationBearing);
 
         return aircraftLegBearing;

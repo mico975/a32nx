@@ -30,9 +30,17 @@ export abstract class BaseFlightPlan {
         return this.allLegs.length - this.missedApproachSegment.allLegs.length;
     }
 
-    activeWaypointIndex = 0;
+    activeLegIndex = 1;
+
+    sequence() {
+        this.activeLegIndex++;
+    }
 
     version = 0;
+
+    incrementVersion() {
+        this.version++;
+    }
 
     originSegment = new OriginSegment(this);
 
@@ -103,21 +111,31 @@ export abstract class BaseFlightPlan {
         return legs[index];
     }
 
+    private lastAllLegsVersion = -1;
+
+    private cachedAllLegs = [];
+
     get allLegs(): FlightPlanElement[] {
-        return [
-            ...this.originSegment.allLegs,
-            ...this.departureRunwayTransitionSegment.allLegs,
-            ...this.departureSegment.allLegs,
-            ...this.departureEnrouteTransitionSegment.allLegs,
-            ...this.enrouteSegment.allLegs,
-            ...this.arrivalEnrouteTransitionSegment.allLegs,
-            ...this.arrivalSegment.allLegs,
-            ...this.arrivalRunwayTransitionSegment.allLegs,
-            ...this.approachViaSegment.allLegs,
-            ...this.approachSegment.allLegs,
-            ...this.destinationSegment.allLegs,
-            ...this.missedApproachSegment.allLegs,
-        ];
+        if (this.lastAllLegsVersion !== this.version) {
+            this.lastAllLegsVersion = this.version;
+
+            this.cachedAllLegs = [
+                ...this.originSegment.allLegs,
+                ...this.departureRunwayTransitionSegment.allLegs,
+                ...this.departureSegment.allLegs,
+                ...this.departureEnrouteTransitionSegment.allLegs,
+                ...this.enrouteSegment.allLegs,
+                ...this.arrivalEnrouteTransitionSegment.allLegs,
+                ...this.arrivalSegment.allLegs,
+                ...this.arrivalRunwayTransitionSegment.allLegs,
+                ...this.approachViaSegment.allLegs,
+                ...this.approachSegment.allLegs,
+                ...this.destinationSegment.allLegs,
+                ...this.missedApproachSegment.allLegs,
+            ];
+        }
+
+        return this.cachedAllLegs;
     }
 
     public computeWaypointStatistics(): Map<number, WaypointStats> {
@@ -227,6 +245,8 @@ export abstract class BaseFlightPlan {
         this.enrouteSegment.allLegs.length = 0;
         await this.arrivalSegment.setArrivalProcedure(undefined);
         await this.approachSegment.setApproachProcedure(undefined);
+
+        this.incrementVersion();
     }
 
     get originRunway(): Runway {
@@ -234,7 +254,7 @@ export abstract class BaseFlightPlan {
     }
 
     setOriginRunway(runwayIdent: string) {
-        return this.originSegment.setOriginRunway(runwayIdent);
+        return this.originSegment.setOriginRunway(runwayIdent).then(() => this.incrementVersion());
     }
 
     get departureRunwayTransition(): ProcedureTransition {
@@ -246,7 +266,7 @@ export abstract class BaseFlightPlan {
     }
 
     setDeparture(procedureIdent: string | undefined) {
-        return this.departureSegment.setDepartureProcedure(procedureIdent);
+        return this.departureSegment.setDepartureProcedure(procedureIdent).then(() => this.incrementVersion());
     }
 
     get departureEnrouteTransition(): ProcedureTransition {
@@ -259,7 +279,9 @@ export abstract class BaseFlightPlan {
      * @param transitionIdent the transition ident or `undefined` for NONE
      */
     async setDepartureEnrouteTransition(transitionIdent: string | undefined) {
-        return this.departureEnrouteTransitionSegment.setDepartureEnrouteTransition(transitionIdent);
+        this.departureEnrouteTransitionSegment.setDepartureEnrouteTransition(transitionIdent);
+
+        this.incrementVersion();
     }
 
     get arrivalEnrouteTransition(): ProcedureTransition {
@@ -272,7 +294,9 @@ export abstract class BaseFlightPlan {
      * @param transitionIdent the transition ident or `undefined` for NONE
      */
     setArrivalEnrouteTransition(transitionIdent: string | undefined) {
-        return this.arrivalEnrouteTransitionSegment.setArrivalEnrouteTransition(transitionIdent);
+        this.arrivalEnrouteTransitionSegment.setArrivalEnrouteTransition(transitionIdent);
+
+        this.incrementVersion();
     }
 
     get arrival() {
@@ -280,7 +304,7 @@ export abstract class BaseFlightPlan {
     }
 
     setArrival(procedureIdent: string | undefined) {
-        return this.arrivalSegment.setArrivalProcedure(procedureIdent);
+        return this.arrivalSegment.setArrivalProcedure(procedureIdent).then(() => this.incrementVersion());
     }
 
     get arrivalRunwayTransition() {
@@ -297,7 +321,9 @@ export abstract class BaseFlightPlan {
      * @param transitionIdent the transition ident or `undefined` for NONE
      */
     setApproachVia(transitionIdent: string | undefined) {
-        return this.approachViaSegment.setApproachVia(transitionIdent);
+        this.approachViaSegment.setApproachVia(transitionIdent);
+
+        this.incrementVersion();
     }
 
     get approach() {
@@ -305,7 +331,7 @@ export abstract class BaseFlightPlan {
     }
 
     async setApproach(procedureIdent: string | undefined) {
-        return this.approachSegment.setApproachProcedure(procedureIdent);
+        return this.approachSegment.setApproachProcedure(procedureIdent).then(() => this.incrementVersion());
     }
 
     get destinationAirport(): Airport {
@@ -313,7 +339,7 @@ export abstract class BaseFlightPlan {
     }
 
     setDestinationAirport(icao: string) {
-        return this.destinationSegment.setDestinationIcao(icao);
+        return this.destinationSegment.setDestinationIcao(icao).then(() => this.incrementVersion());
     }
 
     get destinationRunway(): Runway {
@@ -321,7 +347,7 @@ export abstract class BaseFlightPlan {
     }
 
     setDestinationRunway(runwayIdent: string) {
-        return this.destinationSegment.setDestinationRunway(runwayIdent);
+        return this.destinationSegment.setDestinationRunway(runwayIdent).then(() => this.incrementVersion());
     }
 
     removeElementAt(index: number): boolean {
@@ -330,6 +356,8 @@ export abstract class BaseFlightPlan {
         segment.allLegs.splice(indexInSegment, 1);
 
         this.redistributeLegsAt(index + 1);
+
+        this.incrementVersion();
 
         return true;
     }
@@ -507,6 +535,7 @@ export abstract class BaseFlightPlan {
                 first.allLegs.push({ isDiscontinuity: true });
             }
 
+            this.incrementVersion();
             first.strung = false;
 
             return;
@@ -522,6 +551,7 @@ export abstract class BaseFlightPlan {
             second.allLegs.shift();
         }
 
+        this.incrementVersion();
         first.strung = true;
     }
 }

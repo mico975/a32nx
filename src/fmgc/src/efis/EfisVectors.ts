@@ -1,5 +1,5 @@
-// Copyright (c) 2021 FlyByWire Simulations
-// Copyright (c) 2021 Synaptic Simulations
+// Copyright (c) 2021-2022 FlyByWire Simulations
+// Copyright (c) 2021-2022 Synaptic Simulations
 //
 // SPDX-License-Identifier: GPL-3.0
 
@@ -10,16 +10,17 @@ import { LnavConfig } from '@fmgc/guidance/LnavConfig';
 import { LateralMode } from '@shared/autopilot';
 import { TaskCategory } from '@fmgc/guidance/TaskQueue';
 
-const TRANSMIT_GROUP_SIZE = 4;
+const TRANSMIT_GROUP_SIZE = 5;
 
 const UPDATE_TIMER = 2_500;
 
 export class EfisVectors {
-    private listener = RegisterViewListener('JS_LISTENER_SIMVARS');
+    private listener: ViewListener.ViewListener;
 
     constructor(
         private guidanceController: GuidanceController,
     ) {
+        this.listener = this.guidanceController.viewListener;
     }
 
     private currentActiveVectors = [];
@@ -27,6 +28,8 @@ export class EfisVectors {
     private currentDashedVectors = [];
 
     private currentTemporaryVectors = [];
+
+    private currentSecondaryVectors = [];
 
     public forceUpdate() {
         this.updateTimer = UPDATE_TIMER + 1;
@@ -49,10 +52,13 @@ export class EfisVectors {
 
         const activeFlightPlanVectors = this.guidanceController.activeGeometry?.getAllPathVectors(this.guidanceController.activeLegIndex) ?? [];
         const temporaryFlightPlanVectors = this.guidanceController.temporaryGeometry?.getAllPathVectors() ?? [];
+        const secondaryFlightPlanVectors = this.guidanceController.secondaryGeometry?.getAllPathVectors() ?? [];
 
         const visibleActiveFlightPlanVectors = activeFlightPlanVectors
             .filter((vector) => EfisVectors.isVectorReasonable(vector));
         const visibleTemporaryFlightPlanVectors = temporaryFlightPlanVectors
+            .filter((vector) => EfisVectors.isVectorReasonable(vector));
+        const visibleSecondaryFlightPlanVectors = secondaryFlightPlanVectors
             .filter((vector) => EfisVectors.isVectorReasonable(vector));
 
         if (visibleActiveFlightPlanVectors.length !== activeFlightPlanVectors.length) {
@@ -116,6 +122,23 @@ export class EfisVectors {
             this.currentTemporaryVectors = [];
 
             this.transmitGroup(this.currentTemporaryVectors, EfisVectorsGroup.TEMPORARY);
+        }
+
+        // SECONDARY
+
+        const transmitSecondary = this.guidanceController.secondaryGeometry?.legs?.size > 0;
+        const ClearSecondary = !transmitSecondary && this.currentSecondaryVectors.length > 0;
+
+        if (transmitSecondary) {
+            this.currentSecondaryVectors = visibleSecondaryFlightPlanVectors;
+
+            this.transmitGroup(this.currentSecondaryVectors, EfisVectorsGroup.SECONDARY);
+        }
+
+        if (ClearSecondary) {
+            this.currentSecondaryVectors = [];
+
+            this.transmitGroup(this.currentSecondaryVectors, EfisVectorsGroup.SECONDARY);
         }
 
         if (LnavConfig.DEBUG_PERF) {

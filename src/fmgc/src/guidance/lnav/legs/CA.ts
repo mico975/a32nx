@@ -37,7 +37,7 @@ export class CALeg extends Leg {
 
     private outboundGuidable: Guidable | undefined;
 
-    get terminationWaypoint(): WayPoint | Coordinates | undefined {
+    get terminationWaypoint(): Coordinates | undefined {
         return this.estimatedTermination;
     }
 
@@ -64,7 +64,7 @@ export class CALeg extends Leg {
         this.outboundGuidable = nextGuidable;
 
         // FIXME somehow after reloads the isRunway property is gone, so consider airports as runways for now
-        const afterRunway = previousGuidable instanceof IFLeg && (previousGuidable.fix.isRunway || previousGuidable.fix.icao.startsWith('A'));
+        const afterRunway = previousGuidable instanceof IFLeg && previousGuidable.fix.databaseId.startsWith('A');
 
         // We assign / spread properties here to avoid copying references and causing bugs
         if (isActive && !afterRunway) {
@@ -124,10 +124,10 @@ export class CALeg extends Leg {
         const ESTIMATED_KTS = 175; // NM per hour
 
         // FIXME hax!
-        let originAltitude = 0;
-        if (this.inboundGuidable instanceof IFLeg && this.inboundGuidable.fix.icao.startsWith('A')) {
-            originAltitude = (this.inboundGuidable.fix.infos as AirportInfo).oneWayRunways[0].elevation * 3.28084;
-        }
+        const originAltitude = 0;
+        // if (this.inboundGuidable instanceof IFLeg && this.inboundGuidable.fix.icao.startsWith('A')) {
+        //     originAltitude = (this.inboundGuidable.fix.infos as AirportInfo).oneWayRunways[0].elevation * 3.28084;
+        // }
 
         const minutesToAltitude = (this.altitude - Math.max(0, originAltitude)) / ESTIMATED_VS; // minutes
         const distanceToAltitude = (minutesToAltitude / 60) * ESTIMATED_KTS; // NM

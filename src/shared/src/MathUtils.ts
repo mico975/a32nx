@@ -5,6 +5,8 @@ export class MathUtils {
 
    static RADIANS_TO_DEGREES = 180 / Math.PI;
 
+    static DIV_FEET_TO_NAUTICAL_MILES = 6076.12;
+
    private static optiPow10 = [];
 
    public static fastToFixed(val: number, fraction: number): string {

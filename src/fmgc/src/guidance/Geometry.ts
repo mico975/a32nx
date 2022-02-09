@@ -21,23 +21,26 @@ import { isCourseReversalLeg } from '@fmgc/guidance/lnav/legs';
 import { ControlLaw, GuidanceParameters, LateralPathGuidance } from './ControlLaws';
 
 export class Geometry {
-    /**
-     * The list of transitions between legs.
-     * - entry n: transition after leg n
-     */
-    transitions: Map<number, Transition>;
-
-    /**
-     * The list of legs in this geometry, possibly connected through transitions:
-     * - entry n: nth leg, before transition n
-     */
-    legs: Map<number, Leg>;
-
     public version = 0;
 
-    private listener = RegisterViewListener('JS_LISTENER_SIMVARS');
+    constructor(
+        /**
+         * The list of transitions between legs.
+         * - entry n: transition after leg n
+         */
+        public transitions: Map<number, Transition>,
 
-    constructor(transitions: Map<number, Transition>, legs: Map<number, Leg>) {
+        /**
+         * The list of legs in this geometry, possibly connected through transitions:
+         * - entry n: nth leg, before transition n
+         */
+        public legs: Map<number, Leg>,
+
+        /**
+         * A ViewListener for `JS_LISTENER_SIMVARS`
+         */
+        public listener: ViewListener.ViewListener,
+    ) {
         this.transitions = transitions;
         this.legs = legs;
     }
@@ -170,10 +173,11 @@ export class Geometry {
         }
     }
 
-    static getLegPredictedTas(leg: Leg) {
-        if (leg instanceof TFLeg) {
-            return leg.to?.additionalData?.predictedSpeed;
-        }
+    static getLegPredictedTas(_leg: Leg) {
+        // TODO port over
+        // if (leg instanceof TFLeg) {
+        //     return leg.to?.additionalData?.predictedSpeed;
+        // }
 
         return undefined;
     }

@@ -19,6 +19,7 @@ import { VMLeg } from '@fmgc/guidance/lnav/legs/VM';
 import { XFLeg } from '@fmgc/guidance/lnav/legs/XF';
 import { Coordinates } from '@fmgc/flightplanning/data/geo';
 import { FmgcFlightPhase } from '@shared/flightphase';
+import { FlightPlanService } from '@fmgc/flightplanning/new/FlightPlanService';
 import { GuidanceController } from '../GuidanceController';
 import { GuidanceComponent } from '../GuidanceComponent';
 
@@ -58,8 +59,6 @@ export class LnavDriver implements GuidanceComponent {
     public turnState = LnavTurnState.Normal;
 
     public ppos: LatLongAlt = new LatLongAlt();
-
-    private listener = RegisterViewListener('JS_LISTENER_SIMVARS');
 
     constructor(guidanceController: GuidanceController) {
         this.guidanceController = guidanceController;
@@ -348,7 +347,7 @@ export class LnavDriver implements GuidanceComponent {
 
             // Update EFIS active waypoint info
 
-            this.updateEfisData(activeLeg, gs);
+            // this.updateEfisData(activeLeg, gs);
 
             // Sequencing
 
@@ -368,14 +367,8 @@ export class LnavDriver implements GuidanceComponent {
                 const followingLeg = geometry.legs.get(activeLegIdx + 2);
 
                 if (nextLeg) {
-                    // FIXME we should stop relying on discos in the wpt objects, but for now it's fiiiiiine
-                    // Hard-coded check for TF leg after the disco for now - only case where we don't wanna
-                    // sequence this way is VM
-                    if (currentLeg instanceof XFLeg && currentLeg.fix.endsInDiscontinuity) {
-                        this.sequenceDiscontinuity(currentLeg);
-                    } else {
-                        this.sequenceLeg(currentLeg, outboundTransition);
-                    }
+                    this.sequenceLeg(currentLeg, outboundTransition);
+
                     geometry.onLegSequenced(currentLeg, nextLeg, followingLeg);
                 }
             }
@@ -438,14 +431,10 @@ export class LnavDriver implements GuidanceComponent {
         return eta;
     }
 
-    sequenceLeg(_leg?: Leg, outboundTransition?: Transition): void {
-        // TODO: refactor to use new flight plan manager
-        let wpIndex = this.guidanceController.flightPlanManager.getActiveWaypointIndex(false, false, 0);
-        const wp = this.guidanceController.flightPlanManager.getActiveWaypoint(false, false, 0);
-        console.log(`[FMGC/Guidance] LNAV - sequencing leg. [WP: ${wp.ident} Active WP Index: ${wpIndex}]`);
-        wp.waypointReachedAt = SimVar.GetGlobalVarValue('ZULU TIME', 'seconds');
+    sequenceLeg(leg?: Leg, outboundTransition?: Transition): void {
+        FlightPlanService.active.sequence();
 
-        this.guidanceController.flightPlanManager.setActiveWaypointIndex(++wpIndex, () => {}, 0);
+        console.log(`[FMGC/Guidance] LNAV - sequencing leg. [new Index: ${FlightPlanService.active.activeLegIndex}]`);
 
         outboundTransition?.freeze();
 

@@ -16,6 +16,8 @@ import { FixedRadiusTransition } from '@fmgc/guidance/lnav/transitions/FixedRadi
 import { DmeArcTransition } from '@fmgc/guidance/lnav/transitions/DmeArcTransition';
 import { bearingTo, distanceTo } from 'msfs-geo';
 import { MathUtils } from '@shared/MathUtils';
+import { Waypoint } from 'msfs-navdata';
+import { fixCoordinates } from '@fmgc/flightplanning/new/utils';
 import { LegMetadata } from '@fmgc/guidance/lnav/legs/index';
 import { PathVector, PathVectorType } from '../PathVector';
 
@@ -23,7 +25,7 @@ export class CFLeg extends XFLeg {
     private computedPath: PathVector[] = [];
 
     constructor(
-        fix: WayPoint,
+        fix: Waypoint,
         public readonly course: DegreesTrue,
         public readonly metadata: Readonly<LegMetadata>,
         segment: SegmentType,
@@ -74,8 +76,8 @@ export class CFLeg extends XFLeg {
         return Avionics.Utils.bearingDistanceToCoordinates(
             inverseCourse,
             distance,
-            this.fix.infos.coordinates.lat,
-            this.fix.infos.coordinates.long,
+            fixCoordinates(this.fix.location).lat,
+            fixCoordinates(this.fix.location).long,
         );
     }
 
@@ -96,7 +98,7 @@ export class CFLeg extends XFLeg {
             }];
         } else {
             const startPoint = Geo.doublePlaceBearingIntercept(
-                this.fix.infos.coordinates,
+                fixCoordinates(this.fix.location),
                 this.getPathStartPoint(),
                 Avionics.Utils.clampAngle(this.course + 180),
                 Avionics.Utils.clampAngle(this.course + 90),
@@ -104,16 +106,16 @@ export class CFLeg extends XFLeg {
 
             const bearingWithTransitions = bearingTo(this.getPathStartPoint(), this.getPathEndPoint());
             const intersectedEndPoint = Geo.doublePlaceBearingIntercept(
-                this.fix.infos.coordinates,
+                fixCoordinates(this.fix.location),
                 this.getPathStartPoint(),
                 Avionics.Utils.clampAngle(this.course + 90),
                 bearingWithTransitions,
             );
 
             let endPoint = this.getPathEndPoint();
-            if (distanceTo(this.fix.infos.coordinates, intersectedEndPoint) > 0.01 && Math.abs(MathUtils.diffAngle(this.course, bearingWithTransitions)) > 1) {
+            if (distanceTo(fixCoordinates(this.fix.location), intersectedEndPoint) > 0.01 && Math.abs(MathUtils.diffAngle(this.course, bearingWithTransitions)) > 1) {
                 const correctedStartPoint = Geo.doublePlaceBearingIntercept(
-                    this.fix.infos.coordinates,
+                    fixCoordinates(this.fix.location),
                     this.getPathStartPoint(),
                     Avionics.Utils.clampAngle(this.course + 180),
                     Avionics.Utils.clampAngle(this.course + 90),
@@ -121,7 +123,7 @@ export class CFLeg extends XFLeg {
 
                 const correctedEndPoint = Geo.doublePlaceBearingIntercept(
                     correctedStartPoint,
-                    this.fix.infos.coordinates,
+                    fixCoordinates(this.fix.location),
                     this.course,
                     Avionics.Utils.clampAngle(this.course + 90),
                 );

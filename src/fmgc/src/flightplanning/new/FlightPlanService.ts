@@ -16,8 +16,16 @@ export class FlightPlanService {
 
     static version = 0;
 
+    static has(index: number) {
+        return this.flightPlanManager.has(index);
+    }
+
     static get active() {
         return this.flightPlanManager.get(FlightPlanIndex.Active);
+    }
+
+    static get temporary() {
+        return this.flightPlanManager.get(FlightPlanIndex.Temporary);
     }
 
     static get activeOrTemporary() {

@@ -5,8 +5,10 @@
 
 import { HALeg, HFLeg, HMLeg } from '@fmgc/guidance/lnav/legs/HX';
 import { Leg } from '@fmgc/guidance/lnav/legs/Leg';
-import { AltitudeDescriptor, ProcedureLeg, SpeedDescriptor } from 'msfs-navdata';
+import { AltitudeDescriptor, SpeedDescriptor } from 'msfs-navdata';
 import { TurnDirection } from '@fmgc/types/fstypes/FSEnums';
+import { FlightPlanLeg } from '@fmgc/flightplanning/new/legs/FlightPlanLeg';
+import { FlightPlanLegDefinition } from '@fmgc/flightplanning/new/legs/FlightPlanLegDefinition';
 
 export enum AltitudeConstraintType {
     at,
@@ -63,14 +65,14 @@ export function getAltitudeConstraintFromWaypoint(wp: WayPoint): AltitudeConstra
     return undefined;
 }
 
-export function altitudeConstraintFromProcedureLeg(procedureLeg: ProcedureLeg): AltitudeConstraint | undefined {
-    if (procedureLeg.altitudeDescriptor !== undefined && procedureLeg.altitude1 !== undefined) {
+export function altitudeConstraintFromFlightPlanLeg(definition: FlightPlanLegDefinition): AltitudeConstraint | undefined {
+    if (definition.altitudeDescriptor !== undefined && definition.altitude1 !== undefined) {
         const ac: Partial<AltitudeConstraint> = {};
 
-        ac.altitude1 = procedureLeg.altitude1;
+        ac.altitude1 = definition.altitude1;
         ac.altitude2 = undefined;
 
-        switch (procedureLeg.altitudeDescriptor) {
+        switch (definition.altitudeDescriptor) {
         case AltitudeDescriptor.AtAlt1:
             ac.type = AltitudeConstraintType.at;
             break;
@@ -82,7 +84,7 @@ export function altitudeConstraintFromProcedureLeg(procedureLeg: ProcedureLeg): 
             break;
         case AltitudeDescriptor.BetweenAlt1Alt2:
             ac.type = AltitudeConstraintType.range;
-            ac.altitude2 = procedureLeg.altitude2;
+            ac.altitude2 = definition.altitude2;
             break;
         default:
             break;
@@ -103,18 +105,18 @@ export function getSpeedConstraintFromWaypoint(wp: WayPoint): SpeedConstraint | 
     return undefined;
 }
 
-export function speedConstraintFromProcedureLeg(procedureLeg: ProcedureLeg): SpeedConstraint | undefined {
-    if (procedureLeg.speedDescriptor !== undefined) {
+export function speedConstraintFromProcedureLeg(definition: FlightPlanLegDefinition): SpeedConstraint | undefined {
+    if (definition.speedDescriptor !== undefined) {
         let type;
-        if (procedureLeg.speedDescriptor === SpeedDescriptor.Minimum) {
+        if (definition.speedDescriptor === SpeedDescriptor.Minimum) {
             type = SpeedConstraintType.atOrAbove;
-        } else if (procedureLeg.speedDescriptor === SpeedDescriptor.Mandatory) {
+        } else if (definition.speedDescriptor === SpeedDescriptor.Mandatory) {
             type = SpeedConstraintType.at;
-        } else if (procedureLeg.speedDescriptor === SpeedDescriptor.Maximum) {
+        } else if (definition.speedDescriptor === SpeedDescriptor.Maximum) {
             type = SpeedConstraintType.atOrBelow;
         }
 
-        return { type, speed: procedureLeg.speed! };
+        return { type, speed: definition.speed! };
     }
 
     return undefined;
@@ -180,5 +182,24 @@ export function legMetadataFromMsfsWaypoint(waypoint: WayPoint): LegMetadata {
         altitudeConstraint,
         speedConstraint,
         isOverfly: waypoint.additionalData.overfly,
+    };
+}
+
+export function legMetadataFromFlightPlanLeg(leg: FlightPlanLeg): LegMetadata {
+    const altitudeConstraint = altitudeConstraintFromFlightPlanLeg(leg.definition);
+    const speedConstraint = speedConstraintFromProcedureLeg(leg.definition);
+
+    let turnDirection = TurnDirection.Either;
+    if (leg.definition.turnDirection === 'L') {
+        turnDirection = TurnDirection.Left;
+    } else if (leg.definition.turnDirection === 'R') {
+        turnDirection = TurnDirection.Right;
+    }
+
+    return {
+        turnDirection,
+        altitudeConstraint,
+        speedConstraint,
+        isOverfly: leg.definition.overfly,
     };
 }

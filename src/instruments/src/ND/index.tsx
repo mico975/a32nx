@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { DisplayUnit } from '@instruments/common/displayUnit';
-import { FlightPlanProvider } from '@instruments/common/flightplan';
+// import { FlightPlanProvider } from '@instruments/common/flightplan';
 import { useSimVar } from '@instruments/common/simVars';
 import { useArinc429Var } from '@instruments/common/arinc429';
 import { getSupplier } from '@instruments/common/utils';
@@ -17,9 +17,9 @@ import { FMMessages } from './elements/messages/FMMessages';
 import { TcasWxrMessages } from './elements/messages/TcasWxrMessages';
 import { PlanMode } from './pages/PlanMode';
 import { RoseMode } from './pages/RoseMode';
+import { LnavStatus } from './elements/LnavStatus';
 
 import './styles.scss';
-import { LnavStatus } from './elements/LnavStatus';
 
 const NavigationDisplay: React.FC = () => {
     const [displayIndex] = useState(() => {
@@ -101,36 +101,36 @@ const NavigationDisplay: React.FC = () => {
             electricitySimvar={displayIndex === 1 ? 'L:A32NX_ELEC_AC_ESS_BUS_IS_POWERED' : 'L:A32NX_ELEC_AC_2_BUS_IS_POWERED'}
             potentiometerIndex={displayIndex === 1 ? 89 : 91}
         >
-            <FlightPlanProvider>
-                <svg className="nd-svg" version="1.1" viewBox="0 0 768 768">
-                    <SpeedIndicator adrs={airDataReferenceSource} irs={inertialReferenceSource} />
-                    <WindIndicator adrs={airDataReferenceSource} irs={inertialReferenceSource} />
+            {/* <FlightPlanProvider> */}
+            <svg className="nd-svg" version="1.1" viewBox="0 0 768 768">
+                <SpeedIndicator adrs={airDataReferenceSource} irs={inertialReferenceSource} />
+                <WindIndicator adrs={airDataReferenceSource} irs={inertialReferenceSource} />
 
-                    {true && (
-                        <LnavStatus />
-                    )}
+                {true && (
+                    <LnavStatus />
+                )}
 
-                    {modeIndex === Mode.PLAN && (
-                        <PlanMode
-                            adirsAlign={adirsAlign}
-                            rangeSetting={rangeSettings[rangeIndex]}
-                            symbols={symbols}
-                            side={side}
-                            ppos={ppos}
-                            mapHidden={modeChangeShown || rangeChangeShown}
-                        />
-                    )}
-                    {modeIndex === Mode.ARC && (
-                        <ArcMode
-                            adirsAlign={adirsAlign}
-                            rangeSetting={rangeSettings[rangeIndex]}
-                            symbols={symbols}
-                            side={side}
-                            ppos={ppos}
-                            mapHidden={modeChangeShown || rangeChangeShown}
-                        />
-                    )}
-                    {(modeIndex === Mode.ROSE_ILS || modeIndex === Mode.ROSE_VOR || modeIndex === Mode.ROSE_NAV)
+                {modeIndex === Mode.PLAN && (
+                    <PlanMode
+                        adirsAlign={adirsAlign}
+                        rangeSetting={rangeSettings[rangeIndex]}
+                        symbols={symbols}
+                        side={side}
+                        ppos={ppos}
+                        mapHidden={modeChangeShown || rangeChangeShown}
+                    />
+                )}
+                {modeIndex === Mode.ARC && (
+                    <ArcMode
+                        adirsAlign={adirsAlign}
+                        rangeSetting={rangeSettings[rangeIndex]}
+                        symbols={symbols}
+                        side={side}
+                        ppos={ppos}
+                        mapHidden={modeChangeShown || rangeChangeShown}
+                    />
+                )}
+                {(modeIndex === Mode.ROSE_ILS || modeIndex === Mode.ROSE_VOR || modeIndex === Mode.ROSE_NAV)
                     && (
                         <RoseMode
                             adirsAlign={adirsAlign}
@@ -143,20 +143,20 @@ const NavigationDisplay: React.FC = () => {
                         />
                     )}
 
-                    <Chrono side={side} />
+                <Chrono side={side} />
 
-                    <NavigationDisplayMessages adirsAlign={adirsAlign} mode={modeIndex} modeChangeShown={modeChangeShown} rangeChangeShown={rangeChangeShown} />
-                    {(adirsAlign && modeIndex !== Mode.PLAN) && (
-                        <>
-                            <RadioNavInfo index={1} side={side} />
-                            <RadioNavInfo index={2} side={side} />
-                        </>
-                    )}
-                    <TcasWxrMessages modeIndex={modeIndex} />
-                    <FMMessages modeIndex={modeIndex} side={side} />
+                <NavigationDisplayMessages adirsAlign={adirsAlign} mode={modeIndex} modeChangeShown={modeChangeShown} rangeChangeShown={rangeChangeShown} />
+                {(adirsAlign && modeIndex !== Mode.PLAN) && (
+                    <>
+                        <RadioNavInfo index={1} side={side} />
+                        <RadioNavInfo index={2} side={side} />
+                    </>
+                )}
+                <TcasWxrMessages modeIndex={modeIndex} />
+                <FMMessages modeIndex={modeIndex} side={side} />
 
-                </svg>
-            </FlightPlanProvider>
+            </svg>
+            {/* </FlightPlanProvider> */}
         </DisplayUnit>
     );
 };

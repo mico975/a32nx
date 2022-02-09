@@ -13,6 +13,8 @@ import { courseToFixDistanceToGo, courseToFixGuidance } from '@fmgc/guidance/lna
 import { Transition } from '@fmgc/guidance/lnav/Transition';
 import { Leg } from '@fmgc/guidance/lnav/legs/Leg';
 import { bearingTo } from 'msfs-geo';
+import { fixCoordinates } from '@fmgc/flightplanning/new/utils';
+import { Waypoint } from 'msfs-navdata';
 import { LegMetadata } from '@fmgc/guidance/lnav/legs/index';
 import { PathVector, PathVectorType } from '../PathVector';
 
@@ -20,7 +22,7 @@ export class DFLeg extends XFLeg {
     private computedPath: PathVector[] = [];
 
     constructor(
-        fix: WayPoint,
+        fix: Waypoint,
         public readonly metadata: Readonly<LegMetadata>,
         segment: SegmentType,
     ) {
@@ -49,11 +51,13 @@ export class DFLeg extends XFLeg {
 
         bearing = Avionics.Utils.clampAngle(bearing);
 
+        const coordinates = fixCoordinates(this.fix.location);
+
         return Avionics.Utils.bearingDistanceToCoordinates(
             bearing,
             2,
-            this.fix.infos.coordinates.long,
-            this.fix.infos.coordinates.long,
+            coordinates.lat,
+            coordinates.long,
         );
     }
 
@@ -94,11 +98,11 @@ export class DFLeg extends XFLeg {
     }
 
     get inboundCourse(): Degrees {
-        return bearingTo(this.start, this.fix.infos.coordinates);
+        return bearingTo(this.start, fixCoordinates(this.fix.location));
     }
 
     get outboundCourse(): Degrees {
-        return bearingTo(this.start, this.fix.infos.coordinates);
+        return bearingTo(this.start, fixCoordinates(this.fix.location));
     }
 
     getDistanceToGo(ppos: Coordinates): NauticalMiles {
@@ -106,7 +110,7 @@ export class DFLeg extends XFLeg {
     }
 
     getGuidanceParameters(ppos: Coordinates, trueTrack: Degrees, _tas: Knots): GuidanceParameters | undefined {
-        return courseToFixGuidance(ppos, trueTrack, this.outboundCourse, this.fix.infos.coordinates);
+        return courseToFixGuidance(ppos, trueTrack, this.outboundCourse, fixCoordinates(this.fix.location));
     }
 
     getNominalRollAngle(_gs: Knots): Degrees {

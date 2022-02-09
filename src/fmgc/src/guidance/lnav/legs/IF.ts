@@ -12,10 +12,12 @@ import { PathVector } from '@fmgc/guidance/lnav/PathVector';
 import { Leg } from '@fmgc/guidance/lnav/legs/Leg';
 import { Transition } from '@fmgc/guidance/lnav/Transition';
 import { LegMetadata } from '@fmgc/guidance/lnav/legs/index';
+import { Waypoint } from 'msfs-navdata';
+import { fixCoordinates } from '@fmgc/flightplanning/new/utils';
 
 export class IFLeg extends XFLeg {
     constructor(
-        fix: WayPoint,
+        fix: Waypoint,
         public readonly metadata: Readonly<LegMetadata>,
         segment: SegmentType,
     ) {
@@ -29,11 +31,11 @@ export class IFLeg extends XFLeg {
     }
 
     getPathStartPoint(): Coordinates | undefined {
-        return this.fix.infos.coordinates;
+        return fixCoordinates(this.fix.location);
     }
 
     getPathEndPoint(): Coordinates | undefined {
-        return this.fix.infos.coordinates;
+        return fixCoordinates(this.fix.location);
     }
 
     private nextGuidable: Leg | undefined;
