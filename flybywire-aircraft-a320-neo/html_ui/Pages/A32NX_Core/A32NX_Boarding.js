@@ -20,35 +20,33 @@ class A32NX_Boarding {
 
     async init() {
         // Set default pax (0)
-        await this.setPax(0);
+        console.log("INITIALIZING A32NX_Boarding.js!");
+        const pax = SimVar.GetSimVarValue("L:A32NX_INITIAL_PAX", "number");
+        const cargo = SimVar.GetSimVarValue("L:A32NX_INITIAL_CARGO", "number");
+        await this.setPax(pax);
         await this.loadPaxPayload();
-        await this.loadCargoZero();
+        await this.setCargo(pax, cargo);
         await this.loadCargoPayload();
     }
 
     async fillPaxStation(station, paxToFill) {
         const pax = Math.min(paxToFill, station.seats);
         station.pax = pax;
-
-        await SimVar.SetSimVarValue(`L:${station.simVar}`, "Number", parseInt(pax));
+        await SimVar.SetSimVarValue(`L:${station.simVar}`, "Number", pax);
     }
 
     async fillCargoStation(station, loadToFill) {
         station.load = loadToFill;
         await SimVar.SetSimVarValue(`L:${station.simVar}`, "Number", parseInt(loadToFill));
-
     }
 
     async setPax(numberOfPax) {
         let paxRemaining = parseInt(numberOfPax);
 
         async function fillStation(station, percent, paxToFill) {
-
             const pax = Math.min(Math.trunc(percent * paxToFill), station.seats);
             station.pax = pax;
-
             await SimVar.SetSimVarValue(`L:${station.simVar}_DESIRED`, "Number", parseInt(pax));
-
             paxRemaining -= pax;
         }
 
@@ -56,35 +54,45 @@ class A32NX_Boarding {
         await fillStation(paxStations['rows14_21'], .28, numberOfPax);
         await fillStation(paxStations['rows7_13'], .25 , numberOfPax);
         await fillStation(paxStations['rows1_6'], 1 , paxRemaining);
-        return;
+    }
+
+    async setCargo(numberOfPax, otherCargo) {
+        const bagWeight = numberOfPax * 20;
+        const maxTotalPayload = 21800; // from flight_model.cfg
+        let loadableCargoWeight;
+
+        if (otherCargo === 0) {
+            loadableCargoWeight = bagWeight;
+        } else if ((otherCargo + bagWeight + (numberOfPax * PAX_WEIGHT)) > maxTotalPayload) {
+            loadableCargoWeight = maxTotalPayload - (numberOfPax * PAX_WEIGHT);
+        } else {
+            loadableCargoWeight = otherCargo + bagWeight;
+        }
+        let remainingWeight = loadableCargoWeight;
+
+        async function fillCargo(station, percent, loadableCargoWeight) {
+            const weight = Math.round(percent * loadableCargoWeight);
+            station.load = weight;
+            remainingWeight -= weight;
+            await SimVar.SetSimVarValue(`L:${station.simVar}_DESIRED`, "Number", weight);
+        }
+
+        await fillCargo(cargoStations['fwdBag'], .361 , loadableCargoWeight);
+        await fillCargo(cargoStations['aftBag'], .220, loadableCargoWeight);
+        await fillCargo(cargoStations['aftCont'], .251, loadableCargoWeight);
+        await fillCargo(cargoStations['aftBulk'], 1, remainingWeight);
     }
 
     async loadPaxPayload() {
-
         for (const paxStation of Object.values(this.paxStations)) {
             await SimVar.SetSimVarValue(`PAYLOAD STATION WEIGHT:${paxStation.stationIndex}`, "kilograms", paxStation.pax * PAX_WEIGHT);
         }
-
-        return;
     }
 
     async loadCargoPayload() {
-
         for (const loadStation of Object.values(this.cargoStations)) {
             await SimVar.SetSimVarValue(`PAYLOAD STATION WEIGHT:${loadStation.stationIndex}`, "kilograms", loadStation.load);
         }
-
-        return;
-    }
-
-    async loadCargoZero() {
-        for (const station of Object.values(this.cargoStations)) {
-            await SimVar.SetSimVarValue(`PAYLOAD STATION WEIGHT:${station.stationIndex}`, "kilograms", 0);
-            await SimVar.SetSimVarValue(`L:${station.simVar}_DESIRED`, "Number", 0);
-            await SimVar.SetSimVarValue(`L:${station.simVar}`, "Number", 0);
-        }
-
-        return;
     }
 
     async update(_deltaTime) {
@@ -92,13 +100,12 @@ class A32NX_Boarding {
 
         const boardingStartedByUser = SimVar.GetSimVarValue("L:A32NX_BOARDING_STARTED_BY_USR", "Bool");
         const boardingRate = NXDataStore.get("CONFIG_BOARDING_RATE", 'REAL');
-        const isOnGround = SimVar.GetSimVarValue("SIM ON GROUND", "Bool");
 
         if (!boardingStartedByUser) {
             return;
         }
 
-        if ((!airplaneCanBoard() && boardingRate == 'REAL') || (!airplaneCanBoard() && boardingRate == 'FAST')) {
+        if ((!airplaneCanBoard() && boardingRate === 'REAL') || (!airplaneCanBoard() && boardingRate === 'FAST')) {
             return;
         }
 
@@ -140,7 +147,7 @@ class A32NX_Boarding {
             this.boardingState = "finished";
         }
 
-        if (boardingRate == 'INSTANT') {
+        if (boardingRate === 'INSTANT') {
             // Instant
             for (const paxStation of Object.values(this.paxStations)) {
                 const stationCurrentPaxTarget = SimVar.GetSimVarValue(`L:${paxStation.simVar}_DESIRED`, "Number");
@@ -156,12 +163,9 @@ class A32NX_Boarding {
         }
 
         let msDelay = 5000;
-
-        if (boardingRate == 'FAST') {
+        if (boardingRate === 'FAST') {
             msDelay = 1000;
-        }
-
-        if (boardingRate == 'REAL') {
+        } else if (boardingRate === 'REAL') {
             msDelay = 5000;
         }
 
@@ -174,13 +178,11 @@ class A32NX_Boarding {
                 const stationCurrentPaxTarget = SimVar.GetSimVarValue(`L:${paxStation.simVar}_DESIRED`, "Number");
 
                 if (stationCurrentPax < stationCurrentPaxTarget) {
-                    this.fillPaxStation(paxStation, stationCurrentPax + 1);
+                    await this.fillPaxStation(paxStation, stationCurrentPax + 1);
                     break;
                 } else if (stationCurrentPax > stationCurrentPaxTarget) {
-                    this.fillPaxStation(paxStation, stationCurrentPax - 1);
+                    await this.fillPaxStation(paxStation, stationCurrentPax - 1);
                     break;
-                } else {
-                    continue;
                 }
             }
 
@@ -189,19 +191,17 @@ class A32NX_Boarding {
                 const stationCurrentLoadTarget = SimVar.GetSimVarValue(`L:${loadStation.simVar}_DESIRED`, "Number");
 
                 if ((stationCurrentLoad < stationCurrentLoadTarget) && (Math.abs((stationCurrentLoadTarget - stationCurrentLoad)) > 40)) {
-                    this.fillCargoStation(loadStation, stationCurrentLoad + 40);
+                    await this.fillCargoStation(loadStation, stationCurrentLoad + 40);
                     break;
                 } else if ((stationCurrentLoad < stationCurrentLoadTarget) && (Math.abs((stationCurrentLoadTarget - stationCurrentLoad)) <= 40)) {
-                    this.fillCargoStation(loadStation, (stationCurrentLoad + (Math.abs(stationCurrentLoadTarget - stationCurrentLoad))));
+                    await this.fillCargoStation(loadStation, (stationCurrentLoad + (Math.abs(stationCurrentLoadTarget - stationCurrentLoad))));
                     break;
                 } else if ((stationCurrentLoad > stationCurrentLoadTarget) && (Math.abs((stationCurrentLoadTarget - stationCurrentLoad)) > 40)) {
-                    this.fillCargoStation(loadStation, stationCurrentLoad - 40);
+                    await this.fillCargoStation(loadStation, stationCurrentLoad - 40);
                     break;
                 } else if ((stationCurrentLoad > stationCurrentLoadTarget) && (Math.abs((stationCurrentLoadTarget - stationCurrentLoad)) <= 40)) {
-                    this.fillCargoStation(loadStation, (stationCurrentLoad - (Math.abs(stationCurrentLoad - stationCurrentLoadTarget))));
+                    await this.fillCargoStation(loadStation, (stationCurrentLoad - (Math.abs(stationCurrentLoad - stationCurrentLoadTarget))));
                     break;
-                } else {
-                    continue;
                 }
             }
 
