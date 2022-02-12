@@ -1,3 +1,6 @@
+import * as Sentry from "@sentry/browser";
+import { BrowserTracing } from "@sentry/tracing";
+
 class NavSystem extends BaseInstrument {
     constructor() {
         super(...arguments);
