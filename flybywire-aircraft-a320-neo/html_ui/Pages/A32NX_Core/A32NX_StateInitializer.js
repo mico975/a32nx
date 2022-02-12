@@ -6,17 +6,6 @@ class A32NX_StateInitializer {
         this.selectedAlt = null;
         this.hasUnfrozen = null;
         this.pushedTRK = null;
-
-        this.loadmap = {
-            "L:A32NX_STATE_INIT_PAX_ROWS_1_6": 1,
-            "L:A32NX_STATE_INIT_PAX_ROWS_7_13": 2,
-            "L:A32NX_STATE_INIT_PAX_ROWS_14_21": 3,
-            "L:A32NX_STATE_INIT_PAX_ROWS_22_29": 4,
-            "L:A32NX_STATE_INIT_CARGO_FWD_BAGGAGE_CONTAINER": 5,
-            "L:A32NX_STATE_INIT_CARGO_AFT_CONTAINER": 6,
-            "L:A32NX_STATE_INIT_CARGO_AFT_BAGGAGE": 7,
-            "L:A32NX_STATE_INIT_CARGO_AFT_BULK_LOOSE": 8,
-        };
     }
 
     init() {
@@ -87,17 +76,6 @@ class A32NX_StateInitializer {
             if (!this.pushedTRK && SimVar.GetSimVarValue("L:A32NX_TRK_FPA_MODE_ACTIVE", "number") === 0) {
                 SimVar.SetSimVarValue("K:A32NX.FCU_TRK_FPA_TOGGLE_PUSH", "number", 1);
                 this.pushedTRK = true;
-            }
-
-            // Set load values
-            for (const [loadvar, i] of Object.entries(this.loadmap)) {
-                const initLoadValue = SimVar.GetSimVarValue(loadvar, "kilograms");
-                if (SimVar.GetSimVarValue(`PAYLOAD STATION WEIGHT:${i}`, "kilograms") !== initLoadValue) {
-                    SimVar.SetSimVarValue(`PAYLOAD STATION WEIGHT:${i}`, "kilograms", initLoadValue);
-                    console.log("Setting PAYLOAD ", i);
-                } else {
-                    console.log("PAYLOAD ", i, " SET!");
-                }
             }
 
             // Unfreeze aircraft
