@@ -50,14 +50,14 @@ class A32NX_Boarding {
             paxRemaining -= pax;
         }
 
-        await fillStation(paxStations['rows22_29'], .28 , numberOfPax);
-        await fillStation(paxStations['rows14_21'], .28, numberOfPax);
-        await fillStation(paxStations['rows7_13'], .25 , numberOfPax);
-        await fillStation(paxStations['rows1_6'], 1 , paxRemaining);
+        await fillStation(this.paxStations['rows22_29'], .28 , numberOfPax);
+        await fillStation(this.paxStations['rows14_21'], .28, numberOfPax);
+        await fillStation(this.paxStations['rows7_13'], .25 , numberOfPax);
+        await fillStation(this.paxStations['rows1_6'], 1 , paxRemaining);
     }
 
     async setCargo(numberOfPax, otherCargo) {
-        const bagWeight = numberOfPax * 20;
+        const bagWeight = numberOfPax * BAG_WEIGHT;
         const maxTotalPayload = 21800; // from flight_model.cfg
         let loadableCargoWeight;
 
@@ -77,20 +77,22 @@ class A32NX_Boarding {
             await SimVar.SetSimVarValue(`L:${station.simVar}_DESIRED`, "Number", weight);
         }
 
-        await fillCargo(cargoStations['fwdBag'], .361 , loadableCargoWeight);
-        await fillCargo(cargoStations['aftBag'], .220, loadableCargoWeight);
-        await fillCargo(cargoStations['aftCont'], .251, loadableCargoWeight);
-        await fillCargo(cargoStations['aftBulk'], 1, remainingWeight);
+        await fillCargo(this.cargoStations['fwdBag'], .361 , loadableCargoWeight);
+        await fillCargo(this.cargoStations['aftBag'], .220, loadableCargoWeight);
+        await fillCargo(this.cargoStations['aftCont'], .251, loadableCargoWeight);
+        await fillCargo(this.cargoStations['aftBulk'], 1, remainingWeight);
     }
 
     async loadPaxPayload() {
         for (const paxStation of Object.values(this.paxStations)) {
-            await SimVar.SetSimVarValue(`PAYLOAD STATION WEIGHT:${paxStation.stationIndex}`, "kilograms", paxStation.pax * PAX_WEIGHT);
+            await SimVar.SetSimVarValue(`L:${paxStation.simVar}`, "Number", paxStation.pax);
+            await SimVar.SetSimVarValue(`PAYLOAD STATION WEIGHT:${paxStation.stationIndex}`, "kilograms", (paxStation.pax * PAX_WEIGHT));
         }
     }
 
     async loadCargoPayload() {
         for (const loadStation of Object.values(this.cargoStations)) {
+            await SimVar.SetSimVarValue(`L:${loadStation.simVar}`, "Number", loadStation.load);
             await SimVar.SetSimVarValue(`PAYLOAD STATION WEIGHT:${loadStation.stationIndex}`, "kilograms", loadStation.load);
         }
     }
